@@ -8,11 +8,6 @@ import (
 
 // TODO: create tests
 
-func WriteUnsignedShort(w io.Writer, x uint16) error {
-	_, err := w.Write([]byte{byte(x >> 8), byte(x & 0xFF)})
-	return err
-}
-
 func ReadString(r io.Reader) (s string, err error) {
 	x, err := ReadVarInt(r)
 	if err != nil {

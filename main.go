@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"cmp"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -63,11 +64,11 @@ func main() {
 	{
 		buf := &bytes.Buffer{}
 
-		err1 := WriteVarInt(buf, 0x00)        // Packet ID
-		err2 := WriteVarInt(buf, -1)          // Protocol version
-		err3 := WriteString(buf, host)        // Server address
-		err4 := WriteUnsignedShort(buf, port) // Server port
-		err5 := WriteVarInt(buf, 1)           // Intent
+		err1 := WriteVarInt(buf, 0x00)                    // Packet ID
+		err2 := WriteVarInt(buf, -1)                      // Protocol version
+		err3 := WriteString(buf, host)                    // Server address
+		err4 := binary.Write(buf, binary.BigEndian, port) // Server port
+		err5 := WriteVarInt(buf, 1)                       // Intent
 		if err := cmp.Or(err1, err2, err3, err4, err5); err != nil {
 			logger.Fatalln("Failed to create handshake:", err)
 		}
