@@ -136,13 +136,15 @@ func main() {
 		fmt.Print("\n")
 	}
 	fmt.Printf("%-*v%v/%v\n", pad, "Players:", status.Players.Online, status.Players.Max)
-	fmt.Print(strings.Repeat(" ", pad))
-	for i, v := range status.Players.Sample {
-		fmt.Print(v.Name)
-		if i != len(status.Players.Sample)-1 {
-			fmt.Print(", ")
+	if len(status.Players.Sample) > 0 {
+		fmt.Print(strings.Repeat(" ", pad))
+		for i, v := range status.Players.Sample {
+			fmt.Print(v.Name)
+			if i != len(status.Players.Sample)-1 {
+				fmt.Print(", ")
+			}
 		}
+		fmt.Print("\n")
 	}
-	fmt.Print("\n")
 	fmt.Printf("%-*v%v (%v)\n", pad, "Version:", status.Version.Name, status.Version.Protocol)
 }
