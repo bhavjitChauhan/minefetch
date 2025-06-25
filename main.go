@@ -22,21 +22,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: follow SRV records (e.g. hypixel.net)
 	var host string
 	var port uint16
 	{
 		// TODO: add support for IPv6 addresses
 		before, after, found := strings.Cut(os.Args[1], ":")
 		host = before
-		if !found {
-			after = "25565"
+		if net.ParseIP(before) == nil {
+			_, addrs, err := net.LookupSRV("minecraft", "tcp", before)
+			if err == nil && len(addrs) > 0 {
+				host = strings.TrimSuffix(addrs[0].Target, ".")
+				port = addrs[0].Port
+			}
 		}
-		i, err := strconv.Atoi(after)
-		if err != nil {
-			logger.Fatalln("Invalid port")
+		if found {
+			i, err := strconv.Atoi(after)
+			if err != nil {
+				logger.Fatalln("Invalid port")
+			}
+			port = uint16(i)
+		} else if port == 0 {
+			port = 25565
 		}
-		port = uint16(i)
 	}
 
 	conn, err := net.Dial("tcp", host+":"+strconv.Itoa(int(port)))
