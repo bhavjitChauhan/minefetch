@@ -25,18 +25,21 @@ func main() {
 	var host string
 	var port uint16
 	{
-		// TODO: add support for IPv6 addresses
-		before, after, found := strings.Cut(os.Args[1], ":")
-		host = before
-		if net.ParseIP(before) == nil {
-			_, addrs, err := net.LookupSRV("minecraft", "tcp", before)
+		argHost, argPort, err := net.SplitHostPort(os.Args[1])
+		if err != nil {
+			host = os.Args[1]
+		} else {
+			host = argHost
+		}
+		if net.ParseIP(host) == nil {
+			_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 			if err == nil && len(addrs) > 0 {
 				host = strings.TrimSuffix(addrs[0].Target, ".")
 				port = addrs[0].Port
 			}
 		}
-		if found {
-			i, err := strconv.Atoi(after)
+		if argPort != "" {
+			i, err := strconv.Atoi(argPort)
 			if err != nil {
 				logger.Fatalln("Invalid port")
 			}
@@ -46,7 +49,7 @@ func main() {
 		}
 	}
 
-	conn, err := net.Dial("tcp", host+":"+strconv.Itoa(int(port)))
+	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
 	if err != nil {
 		logger.Fatalln("Failed to connect to server:", err)
 	}
