@@ -43,7 +43,7 @@ func main() {
 		if argPort != "" {
 			i, err := strconv.Atoi(argPort)
 			if err != nil {
-				logger.Fatalln("Invalid port")
+				logger.Fatalln("Invalid port:", argPort)
 			}
 			port = uint16(i)
 		} else if port == 0 {
@@ -75,7 +75,7 @@ func main() {
 		err1 = WriteVarInt(conn, int32(buf.Len()))
 		_, err2 = conn.Write(buf.Bytes())
 		if err := cmp.Or(err1, err2); err != nil {
-			logger.Fatalln("Failed to send handshake:", err)
+			logger.Fatalln("Failed to write handshake:", err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func main() {
 		err1 := WriteVarInt(conn, 1)
 		err2 := WriteVarInt(conn, 0x00) // Packet ID
 		if err := cmp.Or(err1, err2); err != nil {
-			logger.Fatalln("Failed to send status request:", err)
+			logger.Fatalln("Failed to write status request:", err)
 		}
 	}
 
@@ -92,7 +92,7 @@ func main() {
 	{
 		n, err := ReadVarInt(conn)
 		if err != nil {
-			logger.Fatalln("Failed to read status response:", err)
+			logger.Fatalln("Failed to read status response length:", err)
 		}
 
 		buf := bytes.NewBuffer(make([]byte, n))
@@ -103,22 +103,22 @@ func main() {
 
 		id, err := ReadVarInt(buf)
 		if err != nil {
-			logger.Fatalln("Failed to read status response:", err)
+			logger.Fatalln("Failed to read status response packet ID:", err)
 		}
-		if b != 0x00 {
-			logger.Fatalln("Recieved unexpected packet ID:", b)
+		if id != 0x00 {
+			logger.Fatalln("Recieved unexpected status response packet ID:", id)
 		}
 
 		s, err := ReadString(buf)
 		if err != nil {
-			logger.Fatalln("Failed to read status string:", err)
+			logger.Fatalln("Failed to parse status response string:", err)
 		}
 
 		// logger.Println(s)
 
 		err = json.Unmarshal([]byte(s), &status)
 		if err != nil {
-			logger.Fatalln("Failed to parse status JSON:", err)
+			logger.Fatalln("Failed to parse status response JSON:", err)
 		}
 	}
 
