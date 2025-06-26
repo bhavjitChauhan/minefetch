@@ -63,16 +63,16 @@ func main() {
 	{
 		buf := &bytes.Buffer{}
 
-		err1 := WriteVarInt(buf, 0x00)                    // Packet ID
-		err2 := WriteVarInt(buf, -1)                      // Protocol version
-		err3 := WriteString(buf, host)                    // Server address
+		err1 := writeVarInt(buf, 0x00)                    // Packet ID
+		err2 := writeVarInt(buf, -1)                      // Protocol version
+		err3 := writeString(buf, host)                    // Server address
 		err4 := binary.Write(buf, binary.BigEndian, port) // Server port
-		err5 := WriteVarInt(buf, 1)                       // Intent
+		err5 := writeVarInt(buf, 1)                       // Intent
 		if err := cmp.Or(err1, err2, err3, err4, err5); err != nil {
 			logger.Fatalln("Failed to create handshake:", err)
 		}
 
-		err1 = WriteVarInt(conn, int32(buf.Len()))
+		err1 = writeVarInt(conn, int32(buf.Len()))
 		_, err2 = conn.Write(buf.Bytes())
 		if err := cmp.Or(err1, err2); err != nil {
 			logger.Fatalln("Failed to write handshake:", err)
@@ -81,8 +81,8 @@ func main() {
 
 	{
 		// Status request packet
-		err1 := WriteVarInt(conn, 1)
-		err2 := WriteVarInt(conn, 0x00) // Packet ID
+		err1 := writeVarInt(conn, 1)
+		err2 := writeVarInt(conn, 0x00) // Packet ID
 		if err := cmp.Or(err1, err2); err != nil {
 			logger.Fatalln("Failed to write status request:", err)
 		}
@@ -90,7 +90,7 @@ func main() {
 
 	var status Status
 	{
-		n, err := ReadVarInt(conn)
+		n, err := readVarInt(conn)
 		if err != nil {
 			logger.Fatalln("Failed to read status response length:", err)
 		}
@@ -101,7 +101,7 @@ func main() {
 			logger.Fatalln("Failed to read status response:", err)
 		}
 
-		id, err := ReadVarInt(buf)
+		id, err := readVarInt(buf)
 		if err != nil {
 			logger.Fatalln("Failed to read status response packet ID:", err)
 		}
@@ -109,7 +109,7 @@ func main() {
 			logger.Fatalln("Recieved unexpected status response packet ID:", id)
 		}
 
-		s, err := ReadString(buf)
+		s, err := readString(buf)
 		if err != nil {
 			logger.Fatalln("Failed to parse status response string:", err)
 		}
@@ -127,19 +127,19 @@ func main() {
 		start := time.Now()
 		buf := &bytes.Buffer{}
 
-		err1 := WriteVarInt(buf, 0x01)
+		err1 := writeVarInt(buf, 0x01)
 		err2 := binary.Write(buf, binary.BigEndian, start.Unix())
 		if err := cmp.Or(err1, err2); err != nil {
 			logger.Fatalln("Failed to create ping request:", err)
 		}
 
-		err1 = WriteVarInt(conn, int32(buf.Len()))
+		err1 = writeVarInt(conn, int32(buf.Len()))
 		_, err2 = conn.Write(buf.Bytes())
 		if err := cmp.Or(err1, err2); err != nil {
 			logger.Fatalln("Failed to write ping request:", err)
 		}
 
-		n, err := ReadVarInt(conn)
+		n, err := readVarInt(conn)
 		if err != nil {
 			logger.Fatalln("Failed to read pong response length:", err)
 		}
@@ -150,7 +150,7 @@ func main() {
 			logger.Fatalln("Failed to read pong response:", err)
 		}
 
-		id, err := ReadVarInt(buf)
+		id, err := readVarInt(buf)
 		if err != nil {
 			logger.Fatalln("Failed to parse pong response packet ID:", err)
 		}

@@ -8,8 +8,8 @@ import (
 
 // TODO: create tests
 
-func ReadString(r io.Reader) (s string, err error) {
-	x, err := ReadVarInt(r)
+func readString(r io.Reader) (s string, err error) {
+	x, err := readVarInt(r)
 	if err != nil {
 		return
 	}
@@ -29,8 +29,8 @@ func ReadString(r io.Reader) (s string, err error) {
 	return
 }
 
-func WriteString(w io.Writer, s string) error {
-	err := WriteVarInt(w, int32(len(s)))
+func writeString(w io.Writer, s string) error {
+	err := writeVarInt(w, int32(len(s)))
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func WriteString(w io.Writer, s string) error {
 const SEGMENT_BITS byte = 0b0111_1111
 const CONTINUE_BIT byte = 0b1000_0000
 
-func ReadVarInt(r io.Reader) (x int32, err error) {
+func readVarInt(r io.Reader) (x int32, err error) {
 	x = 0
 	position := 0
 	curr := make([]byte, 1)
@@ -81,7 +81,7 @@ func ReadVarInt(r io.Reader) (x int32, err error) {
 	return x, nil
 }
 
-func WriteVarInt(w io.Writer, x int32) error {
+func writeVarInt(w io.Writer, x int32) error {
 	uval := uint32(x)
 	for {
 		if (uval & ^uint32(SEGMENT_BITS)) == 0 {
