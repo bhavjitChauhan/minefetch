@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -57,8 +58,6 @@ func main() {
 	defer conn.Close()
 
 	// _, err = conn.Write([]byte{0xFE, 0x01}) // Legacy Server List Ping
-
-	// TODO: record response latency
 
 	// Handshake packet
 	{
@@ -123,6 +122,54 @@ func main() {
 		}
 	}
 
+	var latency time.Duration
+	{
+		start := time.Now()
+		buf := &bytes.Buffer{}
+
+		err1 := WriteVarInt(buf, 0x01)
+		err2 := binary.Write(buf, binary.BigEndian, start.Unix())
+		if err := cmp.Or(err1, err2); err != nil {
+			logger.Fatalln("Failed to create ping request:", err)
+		}
+
+		err1 = WriteVarInt(conn, int32(buf.Len()))
+		_, err2 = conn.Write(buf.Bytes())
+		if err := cmp.Or(err1, err2); err != nil {
+			logger.Fatalln("Failed to write ping request:", err)
+		}
+
+		n, err := ReadVarInt(conn)
+		if err != nil {
+			logger.Fatalln("Failed to read pong response length:", err)
+		}
+
+		buf = bytes.NewBuffer(make([]byte, n))
+		_, err = io.ReadFull(conn, buf.Bytes())
+		if err != nil {
+			logger.Fatalln("Failed to read pong response:", err)
+		}
+
+		id, err := ReadVarInt(buf)
+		if err != nil {
+			logger.Fatalln("Failed to parse pong response packet ID:", err)
+		}
+		if id != 0x01 {
+			logger.Fatalln("Recieved unexpected packet ID:", id)
+		}
+
+		var timestamp int64
+		err = binary.Read(buf, binary.BigEndian, &timestamp)
+		if err != nil {
+			logger.Fatalln("Failed to parse pong response timestamp:", err)
+		}
+		if timestamp != start.Unix() {
+			logger.Fatalln("Recieved unexpected pong response timestamp:", timestamp)
+		}
+
+		latency = time.Since(start)
+	}
+
 	const pad int = len("Description:") + 2 // "Description" is the longest field name
 	fmt.Printf("%-*v%v\n", pad, "Host:", host)
 	fmt.Printf("%-*v%v\n", pad, "Port:", port)
@@ -139,7 +186,9 @@ func main() {
 		}
 		fmt.Print("\n")
 	}
+	fmt.Printf("%-*v%v ms\n", pad, "Ping:", latency.Milliseconds())
 	fmt.Printf("%-*v%v/%v\n", pad, "Players:", status.Players.Online, status.Players.Max)
+	// TODO: handle colored player sample
 	if len(status.Players.Sample) > 0 {
 		fmt.Print(strings.Repeat(" ", pad))
 		for i, v := range status.Players.Sample {
