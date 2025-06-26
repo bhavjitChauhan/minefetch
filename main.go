@@ -101,7 +101,7 @@ func main() {
 			logger.Fatalln("Failed to read status response:", err)
 		}
 
-		b, err := buf.ReadByte()
+		id, err := ReadVarInt(buf)
 		if err != nil {
 			logger.Fatalln("Failed to read status response:", err)
 		}
