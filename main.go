@@ -179,10 +179,11 @@ func main() {
 	}
 	fmt.Printf("%-*v", pad, "Description:")
 	for i, v := range strings.Split(status.Description.raw, "\n") {
+		f, _ := formatLegacy(v)
 		if i == 0 {
-			fmt.Print(v)
+			fmt.Print(f)
 		} else {
-			fmt.Print(strings.Repeat(" ", pad), v)
+			fmt.Print(strings.Repeat(" ", pad), f)
 		}
 		fmt.Print("\n")
 	}
@@ -192,7 +193,8 @@ func main() {
 	if len(status.Players.Sample) > 0 {
 		fmt.Print(strings.Repeat(" ", pad))
 		for i, v := range status.Players.Sample {
-			fmt.Print(v.Name)
+			f, _ := formatLegacy(v.Name)
+			fmt.Print(f)
 			if i != len(status.Players.Sample)-1 {
 				fmt.Print(", ")
 			}
