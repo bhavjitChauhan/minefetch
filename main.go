@@ -64,10 +64,10 @@ func main() {
 		buf := &bytes.Buffer{}
 
 		err1 := writeVarInt(buf, 0x00)                    // Packet ID
-		err2 := writeVarInt(buf, -1)                      // Protocol version
+		err2 := writeVarInt(buf, 771)                     // Protocol version	(1.21.6)
 		err3 := writeString(buf, host)                    // Server address
 		err4 := binary.Write(buf, binary.BigEndian, port) // Server port
-		err5 := writeVarInt(buf, 1)                       // Intent
+		err5 := writeVarInt(buf, 1)                       // Intent				(Status)
 		if err := cmp.Or(err1, err2, err3, err4, err5); err != nil {
 			logger.Fatalln("Failed to create handshake:", err)
 		}
