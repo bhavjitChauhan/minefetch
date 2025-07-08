@@ -45,8 +45,8 @@ func writeString(w io.Writer, s string) error {
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Data_types#VarInt_and_VarLong
 
-const SEGMENT_BITS byte = 0b0111_1111
-const CONTINUE_BIT byte = 0b1000_0000
+const segmentBits byte = 0b0111_1111
+const continueBit byte = 0b1000_0000
 
 func readVarInt(r io.Reader) (x int32, err error) {
 	x = 0
@@ -64,9 +64,9 @@ func readVarInt(r io.Reader) (x int32, err error) {
 			return
 		}
 
-		x |= int32(curr[0]&SEGMENT_BITS) << position
+		x |= int32(curr[0]&segmentBits) << position
 
-		if curr[0]&CONTINUE_BIT == 0 {
+		if curr[0]&continueBit == 0 {
 			break
 		}
 
@@ -84,12 +84,12 @@ func readVarInt(r io.Reader) (x int32, err error) {
 func writeVarInt(w io.Writer, x int32) error {
 	uval := uint32(x)
 	for {
-		if (uval & ^uint32(SEGMENT_BITS)) == 0 {
+		if (uval & ^uint32(segmentBits)) == 0 {
 			_, err := w.Write([]byte{byte(uval)})
 			return err
 		}
 
-		_, err := w.Write([]byte{byte(uval&uint32(SEGMENT_BITS)) | CONTINUE_BIT})
+		_, err := w.Write([]byte{byte(uval&uint32(segmentBits)) | continueBit})
 		if err != nil {
 			return err
 		}

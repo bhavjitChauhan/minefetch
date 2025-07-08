@@ -6,13 +6,13 @@ import (
 )
 
 // TODO: add favicon
-type Status struct {
+type status struct {
 	Version struct {
 		Name     string
 		Protocol int32
 	}
 	EnforcesSecureChat bool
-	Description        Description
+	Description        description
 	Players            struct {
 		Max    int
 		Online int
@@ -24,12 +24,12 @@ type Status struct {
 	Favicon string
 }
 
-type Description struct {
+type description struct {
 	raw string
 	// TODO: add "clean" version
 }
 
-func (d *Description) UnmarshalJSON(b []byte) error {
+func (d *description) UnmarshalJSON(b []byte) error {
 	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err

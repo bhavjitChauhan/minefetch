@@ -89,7 +89,7 @@ func main() {
 		}
 	}
 
-	var status Status
+	var status status
 	{
 		n, err := readVarInt(conn)
 		if err != nil {
