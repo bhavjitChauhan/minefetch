@@ -189,7 +189,7 @@ func main() {
 			lines = append(lines, line{"IP", ip})
 		}
 		lines = append(lines,
-			line{"Description", formatLegacy(status.Description.raw)},
+			line{"MOTD", formatLegacy(status.Description.raw)},
 			line{"Ping", latency.Milliseconds()})
 		players := fmt.Sprintf("%v/%v", status.Players.Online, status.Players.Max)
 		if len(status.Players.Sample) > 0 {
