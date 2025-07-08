@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -170,36 +171,54 @@ func main() {
 		latency = time.Since(start)
 	}
 
-	const pad int = len("Description:") + 2 // "Description" is the longest field name
-	fmt.Printf("%-*v%v\n", pad, "Host:", host)
-	fmt.Printf("%-*v%v\n", pad, "Port:", port)
-	if net.ParseIP(host) == nil {
-		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
-		fmt.Printf("%-*v%v\n", pad, "IP:", ip)
+	err = printIcon(&status.Favicon)
+	if err != nil {
+		logger.Fatalln("Failed to print icon:", err)
 	}
-	fmt.Printf("%-*v", pad, "Description:")
-	for i, v := range strings.Split(status.Description.raw, "\n") {
-		f, _ := formatLegacy(v)
-		if i == 0 {
-			fmt.Print(f)
-		} else {
-			fmt.Print(strings.Repeat(" ", pad), f)
+
+	{
+		type line struct {
+			key string
+			val any
 		}
-		fmt.Print("\n")
-	}
-	fmt.Printf("%-*v%v ms\n", pad, "Ping:", latency.Milliseconds())
-	fmt.Printf("%-*v%v/%v\n", pad, "Players:", status.Players.Online, status.Players.Max)
-	// TODO: handle colored player sample
-	if len(status.Players.Sample) > 0 {
-		fmt.Print(strings.Repeat(" ", pad))
-		for i, v := range status.Players.Sample {
-			f, _ := formatLegacy(v.Name)
-			fmt.Print(f)
-			if i != len(status.Players.Sample)-1 {
-				fmt.Print(", ")
+		var lines []line
+
+		lines = append(lines, line{"Host", host}, line{"Port", port})
+		if net.ParseIP(host) == nil {
+			ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
+			lines = append(lines, line{"IP", ip})
+		}
+		lines = append(lines,
+			line{"Description", formatLegacy(status.Description.raw)},
+			line{"Ping", latency.Milliseconds()})
+		players := fmt.Sprintf("%v/%v", status.Players.Online, status.Players.Max)
+		if len(status.Players.Sample) > 0 {
+			players += "\n"
+			for i, v := range status.Players.Sample {
+				players += formatLegacy(v.Name)
+				if i != len(status.Players.Sample)-1 {
+					players += ", "
+				}
 			}
 		}
-		fmt.Print("\n")
+		lines = append(lines,
+			line{"Players", players},
+			line{"Version", fmt.Sprintf("%v (%v)", status.Version.Name, status.Version.Protocol)})
+
+		fmt.Print(curUp(iconHeight-1), curBack(iconWidth))
+
+		pad := len(slices.MaxFunc(lines, func(a, b line) int {
+			return cmp.Compare(len(a.key), len(b.key))
+		}).key) + 2
+		for _, v := range lines {
+			s := strings.Split(fmt.Sprint(v.val), "\n")
+			fmt.Printf(curFwd(iconWidth+2)+"%-*v%v\n", pad, v.key+":", s[0])
+			for _, v := range s[1:] {
+				fmt.Println(curFwd(iconWidth+2) + strings.Repeat(" ", pad) + v)
+			}
+		}
+		if len(lines) < iconHeight+1 {
+			fmt.Print(strings.Repeat("\n", iconHeight-len(lines)))
+		}
 	}
-	fmt.Printf("%-*v%v (%v)\n", pad, "Version:", status.Version.Name, status.Version.Protocol)
 }

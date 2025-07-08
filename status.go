@@ -21,6 +21,7 @@ type Status struct {
 			Name string
 		}
 	}
+	Favicon string
 }
 
 type Description struct {

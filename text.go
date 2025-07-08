@@ -1,6 +1,6 @@
 package main
 
-func formatLegacy(format string) (string, error) {
+func formatLegacy(format string) string {
 	var s string
 
 	esc := false
@@ -71,5 +71,5 @@ func formatLegacy(format string) (string, error) {
 	}
 	s += reset
 
-	return s, nil
+	return s
 }

@@ -31,4 +31,23 @@ const (
 	brightCyan    = "\033[96m"
 	brightWhite   = "\033[97m"
 )
+
+func curUp(n uint) string {
+	return "\033[" + strconv.Itoa(int(n)) + "A"
+}
+
+func curDown(n uint) string {
+	return "\033[" + strconv.Itoa(int(n)) + "B"
+}
+
+func curFwd(n uint) string {
+	return "\033[" + strconv.Itoa(int(n)) + "C"
+}
+
+func curBack(n uint) string {
+	return "\033[" + strconv.Itoa(int(n)) + "D"
+}
+
+func trueColor(r, g, b uint8) string {
+	return "\033[38;2;" + strconv.Itoa(int(r)) + ";" + strconv.Itoa(int(g)) + ";" + strconv.Itoa(int(b)) + "m"
 }
