@@ -1,75 +1,200 @@
 package main
 
-func formatLegacy(format string) string {
-	var s string
+import (
+	"encoding/json"
+	"image/color"
+	"strconv"
+)
+
+func formatLegacy(s string) string {
+	var f string
 
 	esc := false
-	for _, v := range format {
+	for _, v := range s {
 		if !esc {
 			if v == '§' {
 				esc = true
 			} else {
-				s += string(v)
+				f += string(v)
 			}
 			continue
 		} else {
 			esc = false
 		}
 
+		// TODO: switch to true color via parseColor
 		// https://minecraft.wiki/w/Formatting_codes#Java_Edition
 		if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-			s += reset
-		}
-
-		switch v {
-		case '0':
-			s += black
-		case '1':
-			s += blue
-		case '2':
-			s += green
-		case '3':
-			s += cyan
-		case '4':
-			s += red
-		case '5':
-			s += magenta
-		case '6':
-			s += yellow
-		case '7':
-			s += white
-		case '8':
-			s += brightBlack
-		case '9':
-			s += brightBlue
-		case 'a':
-			s += brightGreen
-		case 'b':
-			s += brightCyan
-		case 'c':
-			s += brightRed
-		case 'd':
-			s += brightMagenta
-		case 'e':
-			s += brightYellow
-		case 'f':
-			s += brightWhite
-
-		case 'k':
-			s += invert
-		case 'l':
-			s += bold
-		case 'm':
-			s += strike
-		case 'n':
-			s += underline
-		case 'o':
-			s += italic
-		case 'r':
-			s += reset
+			f += reset + trueColor(parseColor(v))
+		} else {
+			switch v {
+			case 'k':
+				f += invert
+			case 'l':
+				f += bold
+			case 'm':
+				f += strike
+			case 'n':
+				f += underline
+			case 'o':
+				f += italic
+			case 'r':
+				f += reset
+			}
 		}
 	}
-	s += reset
 
+	return f + reset
+}
+
+// https://minecraft.wiki/w/Text_component_format#Java_Edition
+type text struct {
+	Text  string
+	Extra []text
+	// NOTE: legacy formatting codes take precedence
+	Color         color.NRGBA
+	Bold          bool
+	Italic        bool
+	Underlined    bool
+	Strikethrough bool
+	Obfuscated    bool
+}
+
+func (t text) raw() string {
+	s := t.Text
+	for _, t = range t.Extra {
+		s += t.raw()
+	}
 	return s
+}
+
+func (t text) ansi() string {
+	s := trueColor(t.Color)
+	if t.Bold {
+		s += bold
+	}
+	if t.Italic {
+		s += italic
+	}
+	if t.Underlined {
+		s += underline
+	}
+	if t.Strikethrough {
+		s += strike
+	}
+	if t.Obfuscated {
+		s += invert
+	}
+	s += formatLegacy(t.Text)
+	for _, t = range t.Extra {
+		s += t.ansi()
+	}
+	return s + reset
+}
+
+func (t *text) UnmarshalJSON(b []byte) error {
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	*t = normText(v, text{})
+	return nil
+}
+
+func parseColor(v any) color.NRGBA {
+	switch v {
+	case '0', "black":
+		return color.NRGBA{0, 0, 0, 255}
+	case '1', "dark_blue":
+		return color.NRGBA{0, 0, 170, 255}
+	case '2', "dark_green":
+		return color.NRGBA{0, 170, 0, 255}
+	case '3', "dark_aqua":
+		return color.NRGBA{0, 170, 170, 255}
+	case '4', "dark_red":
+		return color.NRGBA{170, 0, 0, 255}
+	case '5', "dark_purple":
+		return color.NRGBA{170, 0, 170, 255}
+	case '6', "gold":
+		return color.NRGBA{255, 170, 0, 255}
+	case '7', "gray":
+		return color.NRGBA{170, 170, 170, 255}
+	case '8', "dark_gray":
+		return color.NRGBA{85, 85, 85, 255}
+	case '9', "blue":
+		return color.NRGBA{85, 85, 255, 255}
+	case 'a', "green":
+		return color.NRGBA{85, 255, 85, 255}
+	case 'b', "aqua":
+		return color.NRGBA{85, 255, 255, 255}
+	case 'c', "red":
+		return color.NRGBA{255, 85, 85, 255}
+	case 'd', "light_purple":
+		return color.NRGBA{255, 85, 255, 255}
+	case 'e', "yellow":
+		return color.NRGBA{255, 255, 85, 255}
+	case 'f', "white":
+		return color.NRGBA{255, 255, 255, 255}
+	}
+	if v, ok := v.(string); ok {
+		if v[0] == '#' {
+			x, err := strconv.ParseUint(v[1:], 16, 32)
+			if err == nil {
+				return color.NRGBA{uint8(x >> 16), uint8(x >> 8), uint8(x), 255}
+			}
+		}
+	}
+	return color.NRGBA{128, 128, 128, 255}
+}
+
+func normText(v any, parent text) text {
+	if parent.Color == (color.NRGBA{}) {
+		parent.Color = parseColor(nil)
+	}
+	switch v := v.(type) {
+	case string:
+		t := parent
+		t.Text = v
+		t.Extra = []text{}
+		return t
+	case []any:
+		t := normText(v[0], parent)
+		for _, e := range v[1:] {
+			t.Extra = append(t.Extra, normText(e, t))
+		}
+		return t
+	case map[string]any:
+		t := parent
+		t.Extra = []text{}
+		if v, ok := v["text"].(string); ok {
+			t.Text = v
+		} else {
+			t.Text = ""
+		}
+		if v, ok := v["color"].(string); ok {
+			t.Color = parseColor(v)
+		}
+		if v, ok := v["bold"].(bool); ok {
+			t.Bold = v
+		}
+		if v, ok := v["italic"].(bool); ok {
+			t.Italic = v
+		}
+		if v, ok := v["underlined"].(bool); ok {
+			t.Underlined = v
+		}
+		if v, ok := v["strikethrough"].(bool); ok {
+			t.Strikethrough = v
+		}
+		if v, ok := v["obfuscated"].(bool); ok {
+			t.Obfuscated = v
+		}
+		if v, ok := v["extra"].([]any); ok {
+			for _, e := range v {
+				t.Extra = append(t.Extra, normText(e, t))
+			}
+		}
+		return t
+	}
+	return text{} // TODO: probably not...
 }

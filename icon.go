@@ -43,7 +43,7 @@ func printIcon(s *string) error {
 			if level == 5 {
 				level--
 			}
-			fmt.Print(trueColor(c.R, c.G, c.B) + levels[level])
+			fmt.Print(trueColor(c) + levels[level])
 		}
 		if y != iconHeight-1 {
 			fmt.Print("\n")

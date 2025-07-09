@@ -1,10 +1,5 @@
 package main
 
-import (
-	"encoding/json"
-	"errors"
-)
-
 // TODO: add favicon
 type status struct {
 	Version struct {
@@ -12,7 +7,7 @@ type status struct {
 		Protocol int32
 	}
 	EnforcesSecureChat bool
-	Description        description
+	Description        text
 	Players            struct {
 		Max    int
 		Online int
@@ -22,43 +17,4 @@ type status struct {
 		}
 	}
 	Favicon string
-}
-
-type description struct {
-	raw string
-	// TODO: add "clean" version
-}
-
-func (d *description) UnmarshalJSON(b []byte) error {
-	var v any
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch v := v.(type) {
-	case string:
-		d.raw = v
-	case map[string]any:
-		// TODO: respect key order
-		if s, ok := v["text"].(string); ok {
-			d.raw = s
-		} else {
-			return errors.New("invalid description")
-		}
-		// TODO: implement nested extra objects
-		if v, ok := v["extra"].([]any); ok {
-			for _, v := range v {
-				switch v := v.(type) {
-				case string:
-					d.raw += v
-				case map[string]any:
-					if s, ok := v["text"].(string); ok {
-						d.raw += s
-					}
-				}
-			}
-		}
-	default:
-		return errors.New("invalid description")
-	}
-	return nil
 }

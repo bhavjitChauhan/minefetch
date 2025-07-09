@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"strconv"
 )
 
@@ -12,24 +13,6 @@ const (
 	underline = "\033[4m"
 	invert    = "\033[7m"
 	strike    = "\033[9m"
-
-	black   = "\033[30m"
-	red     = "\033[31m"
-	green   = "\033[32m"
-	yellow  = "\033[33m"
-	blue    = "\033[34m"
-	magenta = "\033[35m"
-	cyan    = "\033[36m"
-	white   = "\033[37m"
-
-	brightBlack   = "\033[90m"
-	brightRed     = "\033[91m"
-	brightGreen   = "\033[92m"
-	brightYellow  = "\033[93m"
-	brightBlue    = "\033[94m"
-	brightMagenta = "\033[95m"
-	brightCyan    = "\033[96m"
-	brightWhite   = "\033[97m"
 )
 
 func curUp(n uint) string {
@@ -48,6 +31,6 @@ func curBack(n uint) string {
 	return "\033[" + strconv.Itoa(int(n)) + "D"
 }
 
-func trueColor(r, g, b uint8) string {
-	return "\033[38;2;" + strconv.Itoa(int(r)) + ";" + strconv.Itoa(int(g)) + ";" + strconv.Itoa(int(b)) + "m"
+func trueColor(c color.NRGBA) string {
+	return "\033[38;2;" + strconv.Itoa(int(c.R)) + ";" + strconv.Itoa(int(c.G)) + ";" + strconv.Itoa(int(c.B)) + "m"
 }
