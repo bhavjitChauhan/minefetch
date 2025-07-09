@@ -28,7 +28,7 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		infoEntry{"Ping", latency.Milliseconds()})
 	players := fmt.Sprintf("%v/%v", status.Players.Online, status.Players.Max)
 	for _, v := range status.Players.Sample {
-		players += "\n" + mc.FormatLegacy(v.Name)
+		players += "\n" + mc.LegacyTextAnsi(v.Name)
 	}
 	entries = append(entries,
 		infoEntry{"Players", players},
