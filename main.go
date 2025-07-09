@@ -49,10 +49,12 @@ func main() {
 		log.Fatalln("Failed to read pong response:", err)
 	}
 
+	latency := time.Since(start)
+
 	err = printIcon(&status.Favicon)
 	if err != nil {
 		log.Fatalln("Failed to print icon:", err)
 	}
 
-	printInfo(host, port, conn, time.Since(start), &status)
+	printInfo(host, port, conn, latency, &status)
 }
