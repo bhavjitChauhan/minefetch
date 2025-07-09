@@ -18,11 +18,12 @@ type infoEntry struct {
 
 func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, status *mc.Status) {
 	var entries []infoEntry
-	entries = append(entries, infoEntry{"Host", host}, infoEntry{"Port", port})
+	entries = append(entries, infoEntry{"Host", host})
 	if net.ParseIP(host) == nil {
 		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
 		entries = append(entries, infoEntry{"IP", ip})
 	}
+	entries = append(entries, infoEntry{"Port", port})
 	entries = append(entries,
 		infoEntry{"MOTD", status.Description.Ansi()},
 		infoEntry{"Ping", latency.Milliseconds()})
