@@ -214,7 +214,7 @@ func main() {
 			s := strings.Split(fmt.Sprint(v.val), "\n")
 			fmt.Printf(curFwd(iconWidth+2)+"%-*v%v\n", pad, v.key+":", s[0])
 			for _, v := range s[1:] {
-				fmt.Println(curFwd(iconWidth+2) + strings.Repeat(" ", pad) + v)
+				fmt.Println(curFwd(iconWidth+uint(pad)+2) + v)
 			}
 		}
 		if len(lines) < iconHeight+1 {
