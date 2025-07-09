@@ -1,4 +1,4 @@
-package main
+package mc
 
 import (
 	"encoding/json"
@@ -7,7 +7,8 @@ import (
 	"strconv"
 )
 
-func formatLegacy(s string) string {
+// TODO: need a better name; ANSI-like
+func FormatLegacy(s string) string {
 	var f string
 
 	esc := false
@@ -26,7 +27,7 @@ func formatLegacy(s string) string {
 		// TODO: switch to true color via parseColor
 		// https://minecraft.wiki/w/Formatting_codes#Java_Edition
 		if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-			f += ansi.Reset + ansi.Color(parseColor(v))
+			f += ansi.Reset + ansi.Color(ParseColor(v))
 		} else {
 			switch v {
 			case 'k':
@@ -49,9 +50,9 @@ func formatLegacy(s string) string {
 }
 
 // https://minecraft.wiki/w/Text_component_format#Java_Edition
-type text struct {
+type Text struct {
 	Text  string
-	Extra []text
+	Extra []Text
 	// NOTE: legacy formatting codes take precedence
 	Color         color.NRGBA
 	Bold          bool
@@ -61,15 +62,15 @@ type text struct {
 	Obfuscated    bool
 }
 
-func (t text) raw() string {
+func (t Text) Raw() string {
 	s := t.Text
 	for _, t = range t.Extra {
-		s += t.raw()
+		s += t.Raw()
 	}
 	return s
 }
 
-func (t text) ansi() string {
+func (t Text) Ansi() string {
 	s := ansi.Color(t.Color)
 	if t.Bold {
 		s += ansi.Bold
@@ -86,23 +87,23 @@ func (t text) ansi() string {
 	if t.Obfuscated {
 		s += ansi.Invert
 	}
-	s += formatLegacy(t.Text)
+	s += FormatLegacy(t.Text)
 	for _, t = range t.Extra {
-		s += t.ansi()
+		s += t.Ansi()
 	}
 	return s + ansi.Reset
 }
 
-func (t *text) UnmarshalJSON(b []byte) error {
+func (t *Text) UnmarshalJSON(b []byte) error {
 	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
-	*t = normText(v, text{})
+	*t = NormText(v, Text{})
 	return nil
 }
 
-func parseColor(v any) color.NRGBA {
+func ParseColor(v any) color.NRGBA {
 	switch v {
 	case '0', "black":
 		return color.NRGBA{0, 0, 0, 255}
@@ -148,32 +149,32 @@ func parseColor(v any) color.NRGBA {
 	return color.NRGBA{128, 128, 128, 255}
 }
 
-func normText(v any, parent text) text {
+func NormText(v any, parent Text) Text {
 	if parent.Color == (color.NRGBA{}) {
-		parent.Color = parseColor(nil)
+		parent.Color = ParseColor(nil)
 	}
 	switch v := v.(type) {
 	case string:
 		t := parent
 		t.Text = v
-		t.Extra = []text{}
+		t.Extra = []Text{}
 		return t
 	case []any:
-		t := normText(v[0], parent)
+		t := NormText(v[0], parent)
 		for _, e := range v[1:] {
-			t.Extra = append(t.Extra, normText(e, t))
+			t.Extra = append(t.Extra, NormText(e, t))
 		}
 		return t
 	case map[string]any:
 		t := parent
-		t.Extra = []text{}
+		t.Extra = []Text{}
 		if v, ok := v["text"].(string); ok {
 			t.Text = v
 		} else {
 			t.Text = ""
 		}
 		if v, ok := v["color"].(string); ok {
-			t.Color = parseColor(v)
+			t.Color = ParseColor(v)
 		}
 		if v, ok := v["bold"].(bool); ok {
 			t.Bold = v
@@ -192,10 +193,10 @@ func normText(v any, parent text) text {
 		}
 		if v, ok := v["extra"].([]any); ok {
 			for _, e := range v {
-				t.Extra = append(t.Extra, normText(e, t))
+				t.Extra = append(t.Extra, NormText(e, t))
 			}
 		}
 		return t
 	}
-	return text{} // TODO: probably not...
+	return Text{} // TODO: probably not...
 }
