@@ -21,7 +21,6 @@ func main() {
 	logger := log.Default()
 
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: mcping <host>")
 		os.Exit(1)
 	}
 

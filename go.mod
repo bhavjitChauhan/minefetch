@@ -1,3 +1,3 @@
-module mcping
+module minefetch
 
 go 1.24.4
