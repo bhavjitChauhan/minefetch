@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"image/color"
+	"minefetch/internal/ansi"
 	"strconv"
 )
 
@@ -25,26 +26,26 @@ func formatLegacy(s string) string {
 		// TODO: switch to true color via parseColor
 		// https://minecraft.wiki/w/Formatting_codes#Java_Edition
 		if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-			f += reset + trueColor(parseColor(v))
+			f += ansi.Reset + ansi.Color(parseColor(v))
 		} else {
 			switch v {
 			case 'k':
-				f += invert
+				f += ansi.Invert
 			case 'l':
-				f += bold
+				f += ansi.Bold
 			case 'm':
-				f += strike
+				f += ansi.Strike
 			case 'n':
-				f += underline
+				f += ansi.Underline
 			case 'o':
-				f += italic
+				f += ansi.Italic
 			case 'r':
-				f += reset
+				f += ansi.Reset
 			}
 		}
 	}
 
-	return f + reset
+	return f + ansi.Reset
 }
 
 // https://minecraft.wiki/w/Text_component_format#Java_Edition
@@ -69,27 +70,27 @@ func (t text) raw() string {
 }
 
 func (t text) ansi() string {
-	s := trueColor(t.Color)
+	s := ansi.Color(t.Color)
 	if t.Bold {
-		s += bold
+		s += ansi.Bold
 	}
 	if t.Italic {
-		s += italic
+		s += ansi.Italic
 	}
 	if t.Underlined {
-		s += underline
+		s += ansi.Underline
 	}
 	if t.Strikethrough {
-		s += strike
+		s += ansi.Strike
 	}
 	if t.Obfuscated {
-		s += invert
+		s += ansi.Invert
 	}
 	s += formatLegacy(t.Text)
 	for _, t = range t.Extra {
 		s += t.ansi()
 	}
-	return s + reset
+	return s + ansi.Reset
 }
 
 func (t *text) UnmarshalJSON(b []byte) error {

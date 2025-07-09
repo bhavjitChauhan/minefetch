@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"minefetch/internal/ansi"
 	"net"
 	"os"
 	"slices"
@@ -21,6 +22,7 @@ func main() {
 	logger := log.Default()
 
 	if len(os.Args) < 2 {
+		fmt.Println("Usage: minefetch <host>")
 		os.Exit(1)
 	}
 
@@ -198,16 +200,16 @@ func main() {
 			line{"Players", players},
 			line{"Version", fmt.Sprintf("%v (%v)", status.Version.Name, status.Version.Protocol)})
 
-		fmt.Print(curUp(iconHeight-1), curBack(iconWidth))
+		fmt.Print(ansi.Up(iconHeight-1), ansi.Back(iconWidth))
 
 		pad := len(slices.MaxFunc(lines, func(a, b line) int {
 			return cmp.Compare(len(a.key), len(b.key))
 		}).key) + 2
 		for _, v := range lines {
 			s := strings.Split(fmt.Sprint(v.val), "\n")
-			fmt.Printf(curFwd(iconWidth+2)+"%-*v%v\n", pad, v.key+":", s[0])
+			fmt.Printf(ansi.Fwd(iconWidth+2)+"%-*v%v\n", pad, v.key+":", s[0])
 			for _, v := range s[1:] {
-				fmt.Println(curFwd(iconWidth+uint(pad)+2) + v)
+				fmt.Println(ansi.Fwd(iconWidth+uint(pad)+2) + v)
 			}
 		}
 		c := 0

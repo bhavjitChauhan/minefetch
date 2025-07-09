@@ -1,6 +1,5 @@
 package main
 
-// TODO: add favicon
 type status struct {
 	Version struct {
 		Name     string

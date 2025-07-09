@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"minefetch/internal/ansi"
 	"strings"
 )
 
@@ -43,13 +44,13 @@ func printIcon(s *string) error {
 			if level == 5 {
 				level--
 			}
-			fmt.Print(trueColor(c) + levels[level])
+			fmt.Print(ansi.Color(c) + levels[level])
 		}
 		if y != iconHeight-1 {
 			fmt.Print("\n")
 		}
 	}
-	fmt.Print(reset)
+	fmt.Print(ansi.Reset)
 
 	return nil
 }
