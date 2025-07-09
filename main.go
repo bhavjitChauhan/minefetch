@@ -192,14 +192,8 @@ func main() {
 			line{"MOTD", status.Description.ansi()},
 			line{"Ping", latency.Milliseconds()})
 		players := fmt.Sprintf("%v/%v", status.Players.Online, status.Players.Max)
-		if len(status.Players.Sample) > 0 {
-			players += "\n"
-			for i, v := range status.Players.Sample {
-				players += formatLegacy(v.Name)
-				if i != len(status.Players.Sample)-1 {
-					players += ", "
-				}
-			}
+		for _, v := range status.Players.Sample {
+			players += "\n" + formatLegacy(v.Name)
 		}
 		lines = append(lines,
 			line{"Players", players},
@@ -217,8 +211,14 @@ func main() {
 				fmt.Println(curFwd(iconWidth+uint(pad)+2) + v)
 			}
 		}
-		if len(lines) < iconHeight+1 {
-			fmt.Print(strings.Repeat("\n", iconHeight-len(lines)))
+		c := 0
+		for _, line := range lines {
+			if s, ok := line.val.(string); ok {
+				c += strings.Count(s, "\n")
+			}
+		}
+		if len(lines)+c < iconHeight+1 {
+			fmt.Print(strings.Repeat("\n", iconHeight-len(lines)-c+1))
 		}
 	}
 }
