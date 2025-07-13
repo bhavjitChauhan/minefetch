@@ -28,8 +28,13 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		players += "\n" + mc.LegacyTextAnsi(v.Name)
 	}
 
-	var ip string
-	if net.ParseIP(host) == nil {
+	argHost, _, err := net.SplitHostPort(os.Args[1])
+	if err != nil {
+		argHost = os.Args[1]
+	}
+
+	ip := argHost
+	if net.ParseIP(argHost) == nil {
 		ip, _, _ = net.SplitHostPort(conn.RemoteAddr().String())
 	}
 
@@ -38,16 +43,13 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		protoVerName = " " + ansi.Gray + "(" + protoVerName + ")"
 	}
 
-	argHost, _, err := net.SplitHostPort(os.Args[1])
-	if err != nil {
-		argHost = os.Args[1]
-	}
-
 	entries = append(entries, infoEntry{"MOTD", strings.Join(desc, "\n")})
 	entries = append(entries, infoEntry{"Ping", fmt.Sprint(latency.Milliseconds(), " ms")})
 	entries = append(entries, infoEntry{"Version", mc.LegacyTextAnsi(status.Version.Name)})
 	entries = append(entries, infoEntry{"Players", players})
-	entries = append(entries, infoEntry{"Host", argHost})
+	if argHost != ip {
+		entries = append(entries, infoEntry{"Host", argHost})
+	}
 	if ip != "" {
 		entries = append(entries, infoEntry{"IP", ip})
 	}
