@@ -11,8 +11,8 @@ import (
 )
 
 type infoEntry struct {
-	key string
-	val any
+	label string
+	v     any
 }
 
 func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, status *mc.Status) {
@@ -62,17 +62,17 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 	fmt.Print(ansi.Up(iconHeight-1), ansi.Back(iconWidth))
 
 	for _, e := range entries {
-		s := strings.Split(fmt.Sprint(e.val), "\n")
-		fmt.Println(ansi.Fwd(iconWidth+2) + ansi.Bold + ansi.Blue + e.key + ansi.Reset + ": " + s[0])
+		s := strings.Split(fmt.Sprint(e.v), "\n")
+		fmt.Println(ansi.Fwd(iconWidth+2) + ansi.Bold + ansi.Blue + e.label + ansi.Reset + ": " + s[0])
 		for _, v := range s[1:] {
-			fmt.Println(ansi.Fwd(iconWidth+2+uint(len(e.key))+2) + v)
+			fmt.Println(ansi.Fwd(iconWidth+2+uint(len(e.label))+2) + v)
 		}
 		fmt.Print(ansi.Reset)
 	}
 
 	nl := 0
 	for _, e := range entries {
-		if s, ok := e.val.(string); ok {
+		if s, ok := e.v.(string); ok {
 			nl += strings.Count(s, "\n")
 		}
 	}
