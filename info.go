@@ -33,6 +33,11 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		ip, _, _ = net.SplitHostPort(conn.RemoteAddr().String())
 	}
 
+	protoVerName := mc.ProtoVerName[status.Version.Protocol]
+	if protoVerName != "" {
+		protoVerName = " " + ansi.Gray + "(" + protoVerName + ")"
+	}
+
 	argHost, _, err := net.SplitHostPort(os.Args[1])
 	if err != nil {
 		argHost = os.Args[1]
@@ -47,6 +52,7 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		entries = append(entries, infoEntry{"IP", ip})
 	}
 	entries = append(entries, infoEntry{"Port", port})
+	entries = append(entries, infoEntry{"Protocol version", fmt.Sprint(status.Version.Protocol, protoVerName)})
 	if host != argHost {
 		entries = append(entries, infoEntry{"SRV Record", host})
 	}
