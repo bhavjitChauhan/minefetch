@@ -1,12 +1,11 @@
 package main
 
 import (
-	"cmp"
 	"fmt"
 	"minefetch/internal/ansi"
 	"minefetch/internal/mc"
 	"net"
-	"slices"
+	"os"
 	"strings"
 	"time"
 )
@@ -18,34 +17,49 @@ type infoEntry struct {
 
 func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, status *mc.Status) {
 	var entries []infoEntry
-	entries = append(entries, infoEntry{"Host", host})
-	if net.ParseIP(host) == nil {
-		ip, _, _ := net.SplitHostPort(conn.RemoteAddr().String())
-		entries = append(entries, infoEntry{"IP", ip})
+
+	desc := strings.Split(status.Description.Ansi(), "\n")
+	for i, s := range desc {
+		desc[i] = ansi.TrimSpace(s)
 	}
-	entries = append(entries, infoEntry{"Port", port})
-	entries = append(entries,
-		infoEntry{"MOTD", status.Description.Ansi()},
-		infoEntry{"Ping", latency.Milliseconds()})
-	players := fmt.Sprintf("%v/%v", status.Players.Online, status.Players.Max)
+
+	players := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", status.Players.Online, status.Players.Max)
 	for _, v := range status.Players.Sample {
 		players += "\n" + mc.LegacyTextAnsi(v.Name)
 	}
-	entries = append(entries,
-		infoEntry{"Players", players},
-		infoEntry{"Version", fmt.Sprintf("%v (%v)", status.Version.Name, status.Version.Protocol)})
+
+	var ip string
+	if net.ParseIP(host) == nil {
+		ip, _, _ = net.SplitHostPort(conn.RemoteAddr().String())
+	}
+
+	argHost, _, err := net.SplitHostPort(os.Args[1])
+	if err != nil {
+		argHost = os.Args[1]
+	}
+
+	entries = append(entries, infoEntry{"MOTD", strings.Join(desc, "\n")})
+	entries = append(entries, infoEntry{"Ping", fmt.Sprint(latency.Milliseconds(), " ms")})
+	entries = append(entries, infoEntry{"Version", mc.LegacyTextAnsi(status.Version.Name)})
+	entries = append(entries, infoEntry{"Players", players})
+	entries = append(entries, infoEntry{"Host", argHost})
+	if ip != "" {
+		entries = append(entries, infoEntry{"IP", ip})
+	}
+	entries = append(entries, infoEntry{"Port", port})
+	if host != argHost {
+		entries = append(entries, infoEntry{"SRV Record", host})
+	}
 
 	fmt.Print(ansi.Up(iconHeight-1), ansi.Back(iconWidth))
 
-	pad := len(slices.MaxFunc(entries, func(a, b infoEntry) int {
-		return cmp.Compare(len(a.key), len(b.key))
-	}).key) + 2
-	for _, v := range entries {
-		s := strings.Split(fmt.Sprint(v.val), "\n")
-		fmt.Printf(ansi.Fwd(iconWidth+2)+"%-*v%v\n", pad, v.key+":", s[0])
+	for _, e := range entries {
+		s := strings.Split(fmt.Sprint(e.val), "\n")
+		fmt.Println(ansi.Fwd(iconWidth+2) + ansi.Bold + ansi.Blue + e.key + ansi.Reset + ": " + s[0])
 		for _, v := range s[1:] {
-			fmt.Println(ansi.Fwd(iconWidth+uint(pad)+2) + v)
+			fmt.Println(ansi.Fwd(iconWidth+2+uint(len(e.key))+2) + v)
 		}
+		fmt.Print(ansi.Reset)
 	}
 
 	nl := 0
