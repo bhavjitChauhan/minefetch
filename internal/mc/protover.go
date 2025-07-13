@@ -1,8 +1,12 @@
 package mc
 
+const (
+	V1_21_7 int32 = 772 - iota
+)
+
 // https://minecraft.wiki/w/Protocol_version#Java_Edition_2
 var ProtoVerName = map[int32]string{
-	772:        "1.21.7",
+	V1_21_7:    "1.21.7",
 	771:        "1.21.6",
 	770:        "1.21.5",
 	769:        "1.21.4",

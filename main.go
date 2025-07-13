@@ -22,7 +22,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	err = mc.WriteHandshake(conn, 771, host, port, mc.IntentStatus)
+	err = mc.WriteHandshake(conn, mc.V1_21_7, host, port, mc.IntentStatus)
 	if err != nil {
 		log.Fatalln("Failed to write handshake:", err)
 	}
