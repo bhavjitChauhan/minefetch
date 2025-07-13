@@ -4,19 +4,15 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/base64"
-	"fmt"
 	"image"
-	"image/color"
 	"image/png"
-	"minefetch/internal/ansi"
+	"minefetch/internal/image/print"
+	"minefetch/internal/image/scale"
 	"strings"
 )
 
-const iconInvRatio = 2
 const iconWidth = 32
-const iconHeight = iconWidth / iconInvRatio
-
-var levels = [...]string{" ", "░", "▒", "▓", "█"}
+const iconHeight = iconWidth / 2
 
 //go:embed unknown_server.png
 var defaultIcon []byte
@@ -34,23 +30,11 @@ func printIcon(s *string) error {
 		return err
 	}
 
-	dx := img.Bounds().Dx() / iconWidth
-	dy := dx * iconInvRatio
-	for y := range iconHeight {
-		for x := range iconWidth {
-			c := color.NRGBAModel.Convert(img.At(x*dx, y*dy)).(color.NRGBA)
-			// https://pkg.go.dev/image/png#example-Decode
-			level := c.A / 51 // 51 * 5 = 255
-			if level == 5 {
-				level--
-			}
-			fmt.Print(ansi.Color(c) + levels[level])
-		}
-		if y != iconHeight-1 {
-			fmt.Print("\n")
-		}
+	f := float64(iconWidth) / float64(img.Bounds().Dy())
+	if f != 1 {
+		img = scale.Lanczos(img, f)
 	}
-	fmt.Print(ansi.Reset)
+	print.HalfPrint(img, 255/2)
 
 	return nil
 }
