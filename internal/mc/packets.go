@@ -69,6 +69,8 @@ type Status struct {
 		}
 	}
 	Favicon string
+	// https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
+	PreventsChatReports bool
 }
 
 func ReadStatusResponse(r io.Reader, status *Status) error {

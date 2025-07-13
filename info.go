@@ -58,6 +58,8 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 	if host != argHost {
 		entries = append(entries, infoEntry{"SRV Record", host})
 	}
+		entries = append(entries, infoEntry{"Prevents chat reports", status.PreventsChatReports})
+	}
 
 	fmt.Print(ansi.Up(iconHeight-1), ansi.Back(iconWidth))
 
