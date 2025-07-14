@@ -50,6 +50,9 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 	if argHost != ip {
 		entries = append(entries, infoEntry{"Host", argHost})
 	}
+	if host != argHost {
+		entries = append(entries, infoEntry{"SRV", host})
+	}
 	if ip != "" {
 		entries = append(entries, infoEntry{"IP", ip})
 	}
