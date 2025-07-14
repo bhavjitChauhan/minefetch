@@ -1,6 +1,7 @@
 package ansi
 
 import (
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -16,27 +17,25 @@ func TrimSpace(s string) string {
 	stop := 0
 	esc := false
 	csi := false
-	ss := ""
+	var b strings.Builder
 	for i, r := range s {
 		switch {
 		case csi:
-			csi = !((r > 'A' && r < 'Z') || (r > 'a' && r < 'z'))
-			if start == -1 {
-				ss += string(r)
-			}
-			continue
+			break
 		case esc:
 			esc = false
 			csi = r == '['
 		case r == 033:
 			esc = true
 		// TODO: don't trim newlines?
+		// TODO: don't trim struck spaces
 		case unicode.IsSpace(r):
 			continue
 		}
 		if esc || csi {
+			csi = csi && !((r > 'A' && r < 'Z') || (r > 'a' && r < 'z'))
 			if start == -1 {
-				ss += string(r)
+				b.WriteRune(r)
 			}
 			continue
 		}
@@ -59,7 +58,7 @@ func TrimSpace(s string) string {
 	for utf8.RuneCountInString(s[stop:stop+i]) > 1 {
 		i--
 	}
-	ss += s[start:stop+i] + Reset
+	b.WriteString(s[start:stop+i] + Reset)
 
-	return ss
+	return b.String()
 }
