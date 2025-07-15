@@ -153,48 +153,68 @@ func LegacyTextAnsi(s string) string {
 	return f + ansi.Reset
 }
 
+var (
+	Default     = color.NRGBA{128, 128, 128, 255}
+	Black       = color.NRGBA{0, 0, 0, 255}
+	DarkBlue    = color.NRGBA{0, 0, 170, 255}
+	DarkGreen   = color.NRGBA{0, 170, 0, 255}
+	DarkAqua    = color.NRGBA{0, 170, 170, 255}
+	DarkRed     = color.NRGBA{170, 0, 0, 255}
+	DarkPurple  = color.NRGBA{170, 0, 170, 255}
+	Gold        = color.NRGBA{255, 170, 0, 255}
+	Gray        = color.NRGBA{170, 170, 170, 255}
+	DarkGray    = color.NRGBA{85, 85, 85, 255}
+	Blue        = color.NRGBA{85, 85, 255, 255}
+	Green       = color.NRGBA{85, 255, 85, 255}
+	Aqua        = color.NRGBA{85, 255, 255, 255}
+	Red         = color.NRGBA{255, 85, 85, 255}
+	LightPurple = color.NRGBA{255, 85, 255, 255}
+	Yellow      = color.NRGBA{255, 255, 85, 255}
+	White       = color.NRGBA{255, 255, 255, 255}
+)
+
 func ParseColor(v any) color.NRGBA {
 	switch v {
 	case '0', "black":
-		return color.NRGBA{0, 0, 0, 255}
+		return Black
 	case '1', "dark_blue":
-		return color.NRGBA{0, 0, 170, 255}
+		return DarkBlue
 	case '2', "dark_green":
-		return color.NRGBA{0, 170, 0, 255}
+		return DarkGreen
 	case '3', "dark_aqua":
-		return color.NRGBA{0, 170, 170, 255}
+		return DarkAqua
 	case '4', "dark_red":
-		return color.NRGBA{170, 0, 0, 255}
+		return DarkRed
 	case '5', "dark_purple":
-		return color.NRGBA{170, 0, 170, 255}
+		return DarkPurple
 	case '6', "gold":
-		return color.NRGBA{255, 170, 0, 255}
+		return Gold
 	case '7', "gray":
-		return color.NRGBA{170, 170, 170, 255}
+		return Gray
 	case '8', "dark_gray":
-		return color.NRGBA{85, 85, 85, 255}
+		return DarkGray
 	case '9', "blue":
-		return color.NRGBA{85, 85, 255, 255}
+		return Blue
 	case 'a', "green":
-		return color.NRGBA{85, 255, 85, 255}
+		return Green
 	case 'b', "aqua":
-		return color.NRGBA{85, 255, 255, 255}
+		return Aqua
 	case 'c', "red":
-		return color.NRGBA{255, 85, 85, 255}
+		return Red
 	case 'd', "light_purple":
-		return color.NRGBA{255, 85, 255, 255}
+		return LightPurple
 	case 'e', "yellow":
-		return color.NRGBA{255, 255, 85, 255}
+		return Yellow
 	case 'f', "white":
-		return color.NRGBA{255, 255, 255, 255}
+		return White
 	}
 	if v, ok := v.(string); ok {
-		if v[0] == '#' {
+		if v != "" && v[0] == '#' {
 			x, err := strconv.ParseUint(v[1:], 16, 32)
 			if err == nil {
 				return color.NRGBA{uint8(x >> 16), uint8(x >> 8), uint8(x), 255}
 			}
 		}
 	}
-	return color.NRGBA{128, 128, 128, 255}
+	return Default
 }
