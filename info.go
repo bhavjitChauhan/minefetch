@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"minefetch/internal/ansi"
+	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
 	"net"
 	"os"
@@ -43,6 +45,8 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		protoVerName = " " + ansi.Gray + "(" + protoVerName + ")"
 	}
 
+	iconConfig, _ := pngconfig.DecodeConfig(base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(status.Favicon.Raw, "data:image/png;base64,"))))
+
 	entries = append(entries, infoEntry{"MOTD", strings.Join(desc, "\n")})
 	entries = append(entries, infoEntry{"Ping", fmt.Sprint(latency.Milliseconds(), " ms")})
 	entries = append(entries, infoEntry{"Version", mc.LegacyTextAnsi(status.Version.Name)})
@@ -57,10 +61,17 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		entries = append(entries, infoEntry{"IP", ip})
 	}
 	entries = append(entries, infoEntry{"Port", port})
-	entries = append(entries, infoEntry{"Protocol version", fmt.Sprint(status.Version.Protocol, protoVerName)})
-	if host != argHost {
-		entries = append(entries, infoEntry{"SRV Record", host})
+	entries = append(entries, infoEntry{"Protocol", fmt.Sprint(status.Version.Protocol, protoVerName)})
+	if status.Favicon.Image != nil {
+		interlaced := ""
+		if iconConfig.Interlaced {
+			interlaced = "Interlaced "
+		}
+		entries = append(entries, infoEntry{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, colorTypeString(iconConfig.ColorType))})
+	} else {
+		entries = append(entries, infoEntry{"Icon", "Default"})
 	}
+	if status.PreventsChatReports {
 		entries = append(entries, infoEntry{"Prevents chat reports", status.PreventsChatReports})
 	}
 
@@ -84,4 +95,20 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 	if len(entries)+nl < iconHeight+1 {
 		fmt.Print(strings.Repeat("\n", iconHeight-len(entries)-nl+1))
 	}
+}
+
+func colorTypeString(t pngconfig.ColorType) string {
+	switch t {
+	case pngconfig.ColorTypeGray:
+		return "grayscale"
+	case pngconfig.ColorTypeRGB:
+		return "RGB"
+	case pngconfig.ColorTypeIndexed:
+		return "indexed"
+	case pngconfig.ColorTypeGrayA:
+		return "grayscale + alpha"
+	case pngconfig.ColorTypeRGBA:
+		return "RGBA"
+	}
+	return "unknown"
 }
