@@ -8,6 +8,7 @@ import (
 	"minefetch/internal/mc"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -40,11 +41,6 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		ip, _, _ = net.SplitHostPort(conn.RemoteAddr().String())
 	}
 
-	protoVerName := mc.ProtoVerName[status.Version.Protocol]
-	if protoVerName != "" {
-		protoVerName = " " + ansi.Gray + "(" + protoVerName + ")"
-	}
-
 	iconConfig, _ := pngconfig.DecodeConfig(base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(status.Favicon.Raw, "data:image/png;base64,"))))
 
 	entries = append(entries, infoEntry{"MOTD", strings.Join(desc, "\n")})
@@ -61,7 +57,19 @@ func printInfo(host string, port uint16, conn net.Conn, latency time.Duration, s
 		entries = append(entries, infoEntry{"IP", ip})
 	}
 	entries = append(entries, infoEntry{"Port", port})
-	entries = append(entries, infoEntry{"Protocol", fmt.Sprint(status.Version.Protocol, protoVerName)})
+
+	{
+		var s string
+		protoVerName, ok := mc.ProtoVerName[status.Version.Protocol]
+		if ok {
+			s = fmt.Sprintf("%v "+ansi.Gray+"(%v)", protoVerName, status.Version.Protocol)
+		} else {
+			s = strconv.Itoa(int(status.Version.Protocol))
+		}
+
+		entries = append(entries, infoEntry{"Protocol", s})
+	}
+
 	if status.Favicon.Image != nil {
 		interlaced := ""
 		if iconConfig.Interlaced {
