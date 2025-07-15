@@ -14,10 +14,10 @@ type BitDepth byte
 // https://www.w3.org/TR/png/#11IHDR
 const (
 	BitDepth1  BitDepth = 1
-	BitDepth2  BitDepth = 1
-	BitDepth4  BitDepth = 1
-	BitDepth8  BitDepth = 1
-	BitDepth16 BitDepth = 1
+	BitDepth2  BitDepth = 2
+	BitDepth4  BitDepth = 4
+	BitDepth8  BitDepth = 8
+	BitDepth16 BitDepth = 16
 )
 
 type ColorType byte
