@@ -57,13 +57,13 @@ func (t *Text) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
-	*t = NormText(v, Text{})
+	*t = normText(v, Text{})
 	return nil
 }
 
-func NormText(v any, parent Text) Text {
+func normText(v any, parent Text) Text {
 	if parent.Color == (color.NRGBA{}) {
-		parent.Color = ParseColor(nil)
+		parent.Color = parseColor(nil)
 	}
 	switch v := v.(type) {
 	case string:
@@ -72,9 +72,9 @@ func NormText(v any, parent Text) Text {
 		t.Extra = []Text{}
 		return t
 	case []any:
-		t := NormText(v[0], parent)
+		t := normText(v[0], parent)
 		for _, e := range v[1:] {
-			t.Extra = append(t.Extra, NormText(e, t))
+			t.Extra = append(t.Extra, normText(e, t))
 		}
 		return t
 	case map[string]any:
@@ -86,7 +86,7 @@ func NormText(v any, parent Text) Text {
 			t.Text = ""
 		}
 		if v, ok := v["color"].(string); ok {
-			t.Color = ParseColor(v)
+			t.Color = parseColor(v)
 		}
 		if v, ok := v["bold"].(bool); ok {
 			t.Bold = v
@@ -105,7 +105,7 @@ func NormText(v any, parent Text) Text {
 		}
 		if v, ok := v["extra"].([]any); ok {
 			for _, e := range v {
-				t.Extra = append(t.Extra, NormText(e, t))
+				t.Extra = append(t.Extra, normText(e, t))
 			}
 		}
 		return t
@@ -131,7 +131,7 @@ func LegacyTextAnsi(s string) string {
 
 		// https://minecraft.wiki/w/Formatting_codes#Java_Edition
 		if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-			f += ansi.Reset + ansi.Color(ParseColor(v))
+			f += ansi.Reset + ansi.Color(parseColor(v))
 		} else {
 			switch v {
 			case 'k':
@@ -173,7 +173,7 @@ var (
 	White       = color.NRGBA{255, 255, 255, 255}
 )
 
-func ParseColor(v any) color.NRGBA {
+func parseColor(v any) color.NRGBA {
 	switch v {
 	case '0', "black":
 		return Black

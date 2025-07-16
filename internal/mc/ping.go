@@ -9,21 +9,21 @@ import (
 	"io"
 )
 
-func WritePingRequest(w io.Writer, t int64) error {
+func writePingRequest(w io.Writer, t int64) error {
 	buf := &bytes.Buffer{}
-	err1 := WriteVarInt(buf, 0x01)
+	err1 := writeVarInt(buf, 0x01)
 	err2 := binary.Write(buf, binary.BigEndian, t)
 	if err := cmp.Or(err1, err2); err != nil {
 		return err
 	}
 
-	err1 = WriteVarInt(w, int32(buf.Len()))
+	err1 = writeVarInt(w, int32(buf.Len()))
 	_, err2 = w.Write(buf.Bytes())
 	return cmp.Or(err1, err2)
 }
 
-func ReadPongResponse(r io.Reader, t0 int64) error {
-	n, err := ReadVarInt(r)
+func readPongResponse(r io.Reader, t0 int64) error {
+	n, err := readVarInt(r)
 	if err != nil {
 		return errors.New("failed to read length: " + err.Error())
 	}
@@ -34,7 +34,7 @@ func ReadPongResponse(r io.Reader, t0 int64) error {
 		return errors.New("failed to read: " + err.Error())
 	}
 
-	id, err := ReadVarInt(buf)
+	id, err := readVarInt(buf)
 	if err != nil {
 		return errors.New("failed to read packet ID: " + err.Error())
 	}

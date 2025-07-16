@@ -10,10 +10,14 @@ import (
 	"image"
 	"image/png"
 	"io"
+	"log"
+	"net"
+	"strconv"
 	"strings"
+	"time"
 )
 
-type Status struct {
+type StatusResponse struct {
 	Version struct {
 		Name     string
 		Protocol int32
@@ -31,6 +35,47 @@ type Status struct {
 	Favicon Icon
 	// https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
 	PreventsChatReports bool
+	Latency             time.Duration
+}
+
+// TODO: merge host and port into address parameter
+
+func Status(host string, port uint16, ver int32) (status StatusResponse, err error) {
+	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	err = writeHandshake(conn, ver, host, port, intentStatus)
+	if err != nil {
+		log.Fatalln("Failed to write handshake:", err)
+	}
+
+	err = writeStatusRequest(conn)
+	if err != nil {
+		log.Fatalln("Failed to write status request:", err)
+	}
+
+	err = readStatusResponse(conn, &status)
+	if err != nil {
+		log.Fatalln("Failed to read status response:", err)
+	}
+
+	start := time.Now()
+	err = writePingRequest(conn, start.Unix())
+	if err != nil {
+		log.Fatalln("Failed to write ping request:", err)
+	}
+
+	err = readPongResponse(conn, start.Unix())
+	if err != nil {
+		log.Fatalln("Failed to read pong response:", err)
+	}
+
+	status.Latency = time.Since(start)
+
+	return
 }
 
 type Icon struct {
@@ -52,14 +97,14 @@ func (icon *Icon) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func WriteStatusRequest(w io.Writer) error {
-	err1 := WriteVarInt(w, 1)    // Packet length
-	err2 := WriteVarInt(w, 0x00) // Packet ID
+func writeStatusRequest(w io.Writer) error {
+	err1 := writeVarInt(w, 1)    // Packet length
+	err2 := writeVarInt(w, 0x00) // Packet ID
 	return cmp.Or(err1, err2)
 }
 
-func ReadStatusResponse(r io.Reader, status *Status) error {
-	n, err := ReadVarInt(r)
+func readStatusResponse(r io.Reader, status *StatusResponse) error {
+	n, err := readVarInt(r)
 	if err != nil {
 		return errors.New("failed to read length: " + err.Error())
 	}
@@ -70,7 +115,7 @@ func ReadStatusResponse(r io.Reader, status *Status) error {
 		return errors.New("failed to read: " + err.Error())
 	}
 
-	id, err := ReadVarInt(buf)
+	id, err := readVarInt(buf)
 	if err != nil {
 		return errors.New("failed to read packet ID: " + err.Error())
 	}
@@ -78,7 +123,7 @@ func ReadStatusResponse(r io.Reader, status *Status) error {
 		return errors.New(fmt.Sprint("unexpected packet ID: ", id))
 	}
 
-	s, err := ReadString(buf)
+	s, err := readString(buf)
 	if err != nil {
 		return errors.New("failed to read string: " + err.Error())
 	}

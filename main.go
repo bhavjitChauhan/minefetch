@@ -16,45 +16,47 @@ func main() {
 		log.Fatalln("Failed to parse arguments:", err)
 	}
 
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
-	if err != nil {
-		log.Fatalln("Failed to connect to server:", err)
-	}
-	defer conn.Close()
+	chStatus := make(chan mc.StatusResponse)
+	chQuery := make(chan mc.QueryResponse)
+	chErr := make(chan error)
 
-	err = mc.WriteHandshake(conn, mc.V1_21_7, host, port, mc.IntentStatus)
-	if err != nil {
-		log.Fatalln("Failed to write handshake:", err)
-	}
+	go func() {
+		status, err := mc.Status(host, port, mc.V1_21_7)
+		if err != nil {
+			chErr <- err
+			return
+		}
+		chStatus <- status
+	}()
 
-	err = mc.WriteStatusRequest(conn)
-	if err != nil {
-		log.Fatalln("Failed to write status request:", err)
-	}
+	go func() {
+		address := net.JoinHostPort(host, strconv.Itoa(int(port)))
+		query, err := mc.Query(address)
+		if err != nil {
+			chErr <- err
+			return
+		}
+		chQuery <- query
+	}()
 
-	var status mc.Status
-	err = mc.ReadStatusResponse(conn, &status)
-	if err != nil {
-		log.Fatalln("Failed to read status response:", err)
-	}
-
-	start := time.Now()
-	err = mc.WritePingRequest(conn, start.Unix())
-	if err != nil {
-		log.Fatalln("Failed to write ping request:", err)
-	}
-
-	err = mc.ReadPongResponse(conn, start.Unix())
-	if err != nil {
-		log.Fatalln("Failed to read pong response:", err)
-	}
-
-	latency := time.Since(start)
-
-	err = printIcon(&status.Favicon)
-	if err != nil {
-		log.Fatalln("Failed to print icon:", err)
+	var status mc.StatusResponse
+	select {
+	case status = <-chStatus:
+	case err := <-chErr:
+		log.Fatalln("Failed to get server status:", err)
+	case <-time.After(time.Millisecond * 1000):
+		log.Fatalln("The server took too long to respond.")
 	}
 
-	printInfo(host, port, conn, latency, &status)
+	var query *mc.QueryResponse
+	select {
+	case q := <-chQuery:
+		query = &q
+	case err := <-chErr:
+		log.Fatalln("Failed to query server:", err)
+	case <-time.After(time.Millisecond * 100):
+		break
+	}
+
+	printStatus(host, port, &status, query)
 }
