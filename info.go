@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 type info struct {
@@ -25,6 +26,15 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 		ss := strings.Split(status.Description.Ansi(), "\n")
 		for i, s := range ss {
 			ss[i] = ansi.TrimSpace(s)
+		}
+		if len(ss) > 1 {
+			runeCounts := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
+			i := 0
+			if runeCounts[1] < runeCounts[0] {
+				i = 1
+			}
+			j := (i + 1) % 2
+			ss[i] = strings.Repeat(" ", (runeCounts[j]-runeCounts[i])/2) + ss[i]
 		}
 		entries = append(entries, info{"MOTD", strings.Join(ss, "\n")})
 	}
@@ -132,9 +142,10 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 
 	printPalette()
 
+	fmt.Println()
 	lines := countLines(entries) + 3
 	if lines < iconHeight+1 {
-		fmt.Print(strings.Repeat("\n", iconHeight-lines+2))
+		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
 	}
 }
 

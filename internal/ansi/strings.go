@@ -1,10 +1,16 @@
 package ansi
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 )
+
+func RemoveCsi(s string) string {
+	re := regexp.MustCompile(`\033\[\d+(?:;\d+)*[a-zA-Z]`)
+	return re.ReplaceAllString(s, "")
+}
 
 // Like strings.TrimSpace, but ignores [Control Sequence Introducer commands].
 //
