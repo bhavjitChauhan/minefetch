@@ -130,9 +130,11 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 		printEntry(e)
 	}
 
-	lines := countLines(entries)
+	printPalette()
+
+	lines := countLines(entries) + 3
 	if lines < iconHeight+1 {
-		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
+		fmt.Print(strings.Repeat("\n", iconHeight-lines+2))
 	}
 }
 
@@ -141,6 +143,18 @@ func printEntry(e info) {
 	fmt.Println(ansi.Fwd(iconWidth+2) + ansi.Bold + ansi.Blue + e.label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
 		fmt.Println(ansi.Fwd(iconWidth+2+uint(len(e.label))+2) + v)
+	}
+	fmt.Print(ansi.Reset)
+}
+
+func printPalette() {
+	const codes = "0123456789abcdef"
+	fmt.Print("\n" + ansi.Fwd(iconWidth+2))
+	for i, code := range codes {
+		fmt.Print(ansi.Bg(mc.ParseColor(code)) + "   ")
+		if (i + 1) == (len(codes) / 2) {
+			fmt.Print(ansi.Reset + "\n" + ansi.Fwd(iconWidth+2))
+		}
 	}
 	fmt.Print(ansi.Reset)
 }
