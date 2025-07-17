@@ -68,10 +68,7 @@ func Status(host string, port uint16, ver int32) (status StatusResponse, err err
 		log.Fatalln("Failed to write ping request:", err)
 	}
 
-	err = readPongResponse(conn, start.Unix())
-	if err != nil {
-		log.Fatalln("Failed to read pong response:", err)
-	}
+	readPongResponse(conn, start.Unix())
 
 	status.Latency = time.Since(start)
 
