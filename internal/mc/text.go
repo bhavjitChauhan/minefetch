@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"image/color"
 	"minefetch/internal/ansi"
+	"minefetch/internal/emoji"
 	"strconv"
 )
 
@@ -45,7 +46,7 @@ func (t Text) Ansi() string {
 	if t.Obfuscated {
 		s += ansi.Invert
 	}
-	s += LegacyTextAnsi(t.Text)
+	s += LegacyTextAnsi(emoji.ReplaceColored(t.Text))
 	for _, t = range t.Extra {
 		s += t.Ansi()
 	}
