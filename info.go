@@ -106,18 +106,12 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "
 		}
-		ii = append(ii, info{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, colorTypeString(iconConfig.ColorType))})
+		ii = append(ii, info{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, formatColorType(iconConfig.ColorType))})
 	} else {
 		ii = append(ii, info{"Icon", "Default"})
 	}
 
-	{
-		s := "Not enforced"
-		if status.EnforcesSecureChat {
-			s = "Enforced"
-		}
-		ii = append(ii, info{"Secure chat", s})
-	}
+	ii = append(ii, info{"Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced")})
 
 	if status.PreventsChatReports {
 		ii = append(ii, info{"Prevents chat reports", status.PreventsChatReports})
@@ -134,9 +128,8 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int
 func printQuery(query *mc.QueryResponse) (lines int) {
 	var ii []info
 
+	ii = append(ii, info{"Query", formatBool(query != nil, "Enabled", "Disabled")})
 	if query != nil {
-		ii = append(ii, info{"Query", "Enabled"})
-
 		if query.Software != "" {
 			ii = append(ii, info{"Software", query.Software})
 		}
@@ -144,8 +137,6 @@ func printQuery(query *mc.QueryResponse) (lines int) {
 		if len(query.Plugins) > 0 {
 			ii = append(ii, info{"Plugins", strings.Join(query.Plugins, "\n")})
 		}
-	} else {
-		ii = append(ii, info{"Query", "Disabled"})
 	}
 
 	for _, i := range ii {
@@ -168,7 +159,27 @@ func printPalette() (lines int) {
 	return 3
 }
 
-func colorTypeString(t pngconfig.ColorType) string {
+func formatBool(bool bool, t, f string) string {
+	var s string
+	if bool {
+		s += ansi.Green
+		if t != "" {
+			s += t
+		} else {
+			s += "Yes"
+		}
+	} else {
+		s += ansi.Red
+		if f != "" {
+			s += f
+		} else {
+			s += "No"
+		}
+	}
+	return s
+}
+
+func formatColorType(t pngconfig.ColorType) string {
 	switch t {
 	case pngconfig.ColorTypeGray:
 		return "grayscale"

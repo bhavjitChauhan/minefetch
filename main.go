@@ -21,6 +21,7 @@ func main() {
 
 	chStatus := make(chan mc.StatusResponse)
 	chQuery := make(chan mc.QueryResponse)
+	chBlocked := make(chan bool)
 	chErr := make(chan error)
 
 	go func() {
@@ -40,6 +41,15 @@ func main() {
 			return
 		}
 		chQuery <- query
+	}()
+
+	go func() {
+		blocked, err := mc.IsBlocked(host)
+		if err != nil {
+			chErr <- err
+			return
+		}
+		chBlocked <- blocked
 	}()
 
 	var status mc.StatusResponse
@@ -73,6 +83,17 @@ func main() {
 
 	fmt.Print(ansi.Back(iconWidth + padding))
 	lines += printQuery(query)
+
+	var blocked bool
+	select {
+	case blocked = <-chBlocked:
+	case err := <-chErr:
+		log.Fatalln("Failed to check if the server is blocked:", err)
+	case <-time.After(time.Millisecond * 100):
+		break
+	}
+	lines += printInfo(info{"Blocked", formatBool(!blocked, "No", "Yes")})
+
 	lines += printPalette()
 	if lines < iconHeight+1 {
 		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
