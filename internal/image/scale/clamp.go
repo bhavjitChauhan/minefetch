@@ -1,16 +1,8 @@
 package scale
 
-func clampInt(x, a, b int) int {
-	if x < a {
-		return a
-	}
-	if x > b {
-		return b
-	}
-	return x
-}
+import "cmp"
 
-func clamp(x, a, b float64) float64 {
+func clamp[T cmp.Ordered](x, a, b T) T {
 	if x < a {
 		return a
 	}

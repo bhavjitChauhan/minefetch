@@ -36,8 +36,8 @@ func Lanczos(src image.Image, f float64) image.Image {
 			for j := float64(-fa + 1); j < fa; j++ {
 				lj := lanczos(uint(fa), (j-sy+math.Floor(sy))*f)
 				for i := float64(-fa + 1); i < fa; i++ {
-					sxi := clampInt(int(math.Floor(sx)+i), 0, sb.Dx()-1)
-					syj := clampInt(int(math.Floor(sy)+j), 0, sb.Dy()-1)
+					sxi := clamp(int(math.Floor(sx)+i), 0, sb.Dx()-1)
+					syj := clamp(int(math.Floor(sy)+j), 0, sb.Dy()-1)
 					wl := lanczos(uint(fa), (i-sx+math.Floor(sx))*f) * lj * w
 					c := color.NRGBAModel.Convert(src.At(sxi, syj)).(color.NRGBA)
 					acc.r += wl * float64(c.R)
