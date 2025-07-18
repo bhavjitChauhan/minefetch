@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"minefetch/internal/ansi"
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
@@ -14,13 +13,25 @@ import (
 	"unicode/utf8"
 )
 
+const padding = 2
+
 type info struct {
 	label string
-	v     any
+	data  any
 }
 
-func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.QueryResponse) {
-	var entries []info
+func printInfo(i info) (lines int) {
+	s := strings.Split(fmt.Sprint(i.data), "\n")
+	fmt.Println(ansi.Fwd(iconWidth+padding) + ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
+	for _, v := range s[1:] {
+		fmt.Println(ansi.Fwd(iconWidth+padding+uint(len(i.label))+2) + v)
+	}
+	fmt.Print(ansi.Reset)
+	return len(s)
+}
+
+func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int) {
+	var ii []info
 
 	{
 		ss := strings.Split(status.Description.Ansi(), "\n")
@@ -36,19 +47,19 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 			j := (i + 1) % 2
 			ss[i] = strings.Repeat(" ", (runeCounts[j]-runeCounts[i])/2) + ss[i]
 		}
-		entries = append(entries, info{"MOTD", strings.Join(ss, "\n")})
+		ii = append(ii, info{"MOTD", strings.Join(ss, "\n")})
 	}
 
-	entries = append(entries, info{"Ping", fmt.Sprint(status.Latency.Milliseconds(), " ms")})
+	ii = append(ii, info{"Ping", fmt.Sprint(status.Latency.Milliseconds(), " ms")})
 
-	entries = append(entries, info{"Version", mc.LegacyTextAnsi(status.Version.Name)})
+	ii = append(ii, info{"Version", mc.LegacyTextAnsi(status.Version.Name)})
 
 	{
 		s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", status.Players.Online, status.Players.Max)
 		for _, v := range status.Players.Sample {
 			s += "\n" + mc.LegacyTextAnsi(v.Name)
 		}
-		entries = append(entries, info{"Players", s})
+		ii = append(ii, info{"Players", s})
 	}
 
 	{
@@ -65,17 +76,17 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 			}
 		}
 		if argHost != ip {
-			entries = append(entries, info{"Host", argHost})
+			ii = append(ii, info{"Host", argHost})
 		}
 		if host != argHost {
-			entries = append(entries, info{"SRV", host})
+			ii = append(ii, info{"SRV", host})
 		}
 		if ip != "" {
-			entries = append(entries, info{"IP", ip})
+			ii = append(ii, info{"IP", ip})
 		}
 	}
 
-	entries = append(entries, info{"Port", port})
+	ii = append(ii, info{"Port", port})
 
 	{
 		var s string
@@ -86,7 +97,7 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 			s = strconv.Itoa(int(status.Version.Protocol))
 		}
 
-		entries = append(entries, info{"Protocol", s})
+		ii = append(ii, info{"Protocol", s})
 	}
 
 	if status.Favicon.Image != nil {
@@ -95,9 +106,9 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "
 		}
-		entries = append(entries, info{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, colorTypeString(iconConfig.ColorType))})
+		ii = append(ii, info{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, colorTypeString(iconConfig.ColorType))})
 	} else {
-		entries = append(entries, info{"Icon", "Default"})
+		ii = append(ii, info{"Icon", "Default"})
 	}
 
 	{
@@ -105,60 +116,46 @@ func printStatus(host string, port uint16, status *mc.StatusResponse, query *mc.
 		if status.EnforcesSecureChat {
 			s = "Enforced"
 		}
-		entries = append(entries, info{"Secure chat", s})
+		ii = append(ii, info{"Secure chat", s})
 	}
 
 	if status.PreventsChatReports {
-		entries = append(entries, info{"Prevents chat reports", status.PreventsChatReports})
+		ii = append(ii, info{"Prevents chat reports", status.PreventsChatReports})
 
 	}
 
+	for _, i := range ii {
+		lines += printInfo(i)
+	}
+
+	return
+}
+
+func printQuery(query *mc.QueryResponse) (lines int) {
+	var ii []info
+
 	if query != nil {
-		entries = append(entries, info{"Query", "Enabled"})
+		ii = append(ii, info{"Query", "Enabled"})
 
 		if query.Software != "" {
-			entries = append(entries, info{"Software", query.Software})
+			ii = append(ii, info{"Software", query.Software})
 		}
 
 		if len(query.Plugins) > 0 {
-			entries = append(entries, info{"Plugins", strings.Join(query.Plugins, "\n")})
+			ii = append(ii, info{"Plugins", strings.Join(query.Plugins, "\n")})
 		}
 	} else {
-		entries = append(entries, info{"Query", "Disabled"})
+		ii = append(ii, info{"Query", "Disabled"})
 	}
 
-	{
-		err := printIcon(&status.Favicon)
-		if err != nil {
-			log.Fatalln("Failed to print icon:", err)
-		}
+	for _, i := range ii {
+		lines += printInfo(i)
 	}
 
-	fmt.Print(ansi.Up(iconHeight-1) + ansi.Back(iconWidth))
-
-	for _, e := range entries {
-		printEntry(e)
-	}
-
-	printPalette()
-
-	fmt.Println()
-	lines := countLines(entries) + 3
-	if lines < iconHeight+1 {
-		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
-	}
+	return
 }
 
-func printEntry(e info) {
-	s := strings.Split(fmt.Sprint(e.v), "\n")
-	fmt.Println(ansi.Fwd(iconWidth+2) + ansi.Bold + ansi.Blue + e.label + ansi.Reset + ": " + s[0])
-	for _, v := range s[1:] {
-		fmt.Println(ansi.Fwd(iconWidth+2+uint(len(e.label))+2) + v)
-	}
-	fmt.Print(ansi.Reset)
-}
-
-func printPalette() {
+func printPalette() (lines int) {
 	const codes = "0123456789abcdef"
 	fmt.Print("\n" + ansi.Fwd(iconWidth+2))
 	for i, code := range codes {
@@ -167,17 +164,8 @@ func printPalette() {
 			fmt.Print(ansi.Reset + "\n" + ansi.Fwd(iconWidth+2))
 		}
 	}
-	fmt.Print(ansi.Reset)
-}
-
-func countLines(entries []info) (lines int) {
-	lines = len(entries)
-	for _, e := range entries {
-		if s, ok := e.v.(string); ok {
-			lines += strings.Count(s, "\n")
-		}
-	}
-	return
+	fmt.Println(ansi.Reset)
+	return 3
 }
 
 func colorTypeString(t pngconfig.ColorType) string {

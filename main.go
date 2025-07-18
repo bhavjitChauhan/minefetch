@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"minefetch/internal/ansi"
 	"minefetch/internal/mc"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -44,9 +47,19 @@ func main() {
 	case status = <-chStatus:
 	case err := <-chErr:
 		log.Fatalln("Failed to get server status:", err)
-	case <-time.After(time.Millisecond * 1000):
+	case <-time.After(time.Second * 5):
 		log.Fatalln("The server took too long to respond.")
 	}
+
+	err = printIcon(&status.Favicon)
+	if err != nil {
+		log.Fatalln("Failed to print icon:", err)
+	}
+
+	fmt.Print(ansi.Up(iconHeight-1) + ansi.Back(iconWidth))
+	lines := 0
+	lines += printStatus(host, port, &status)
+	fmt.Print(ansi.Fwd(iconWidth + padding))
 
 	var query *mc.QueryResponse
 	select {
@@ -58,5 +71,10 @@ func main() {
 		break
 	}
 
-	printStatus(host, port, &status, query)
+	fmt.Print(ansi.Back(iconWidth + padding))
+	lines += printQuery(query)
+	lines += printPalette()
+	if lines < iconHeight+1 {
+		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
+	}
 }
