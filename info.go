@@ -114,7 +114,7 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int
 	ii = append(ii, info{"Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced")})
 
 	if status.PreventsChatReports {
-		ii = append(ii, info{"Prevents chat reports", status.PreventsChatReports})
+		ii = append(ii, info{"Prevents chat reports", ansi.Green + "Yes"})
 
 	}
 
@@ -162,19 +162,9 @@ func printPalette() (lines int) {
 func formatBool(bool bool, t, f string) string {
 	var s string
 	if bool {
-		s += ansi.Green
-		if t != "" {
-			s += t
-		} else {
-			s += "Yes"
-		}
+		s = ansi.Green + t
 	} else {
-		s += ansi.Red
-		if f != "" {
-			s += f
-		} else {
-			s += "No"
-		}
+		s = ansi.Red + f
 	}
 	return s
 }
