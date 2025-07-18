@@ -192,7 +192,9 @@ func readQueryStatus(r io.Reader, id int32) (status QueryResponse, err error) {
 				break
 			}
 			status.Software = v[:i]
-			status.Plugins = strings.Split(v[i+2:], "; ")
+			if strings.TrimSpace(v[i+2:]) != "" {
+				status.Plugins = strings.Split(v[i+2:], "; ")
+			}
 		case "map":
 			status.World = v
 		case "numplayers":

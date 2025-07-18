@@ -85,6 +85,9 @@ func (icon *Icon) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
 	}
+	if s == "" {
+		return nil
+	}
 
 	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(s, "data:image/png;base64,")))
 	img, err := png.Decode(r)
