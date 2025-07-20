@@ -11,32 +11,19 @@ import (
 
 func writePingRequest(w io.Writer, t int64) error {
 	buf := &bytes.Buffer{}
-	err1 := writeVarInt(buf, 0x01)
+	err1 := writeVarInt(buf, statusPacketIdPingRequest)
 	err2 := binary.Write(buf, binary.BigEndian, t)
 	if err := cmp.Or(err1, err2); err != nil {
 		return err
 	}
 
-	err1 = writeVarInt(w, int32(buf.Len()))
-	_, err2 = w.Write(buf.Bytes())
-	return cmp.Or(err1, err2)
+	return writePacket(w, buf.Bytes())
 }
 
 func readPongResponse(r io.Reader, t0 int64) error {
-	n, err := readVarInt(r)
+	id, buf, err := readPacket(r)
 	if err != nil {
-		return errors.New("failed to read length: " + err.Error())
-	}
-
-	buf := bytes.NewBuffer(make([]byte, n))
-	_, err = io.ReadFull(r, buf.Bytes())
-	if err != nil {
-		return errors.New("failed to read: " + err.Error())
-	}
-
-	id, err := readVarInt(buf)
-	if err != nil {
-		return errors.New("failed to read packet ID: " + err.Error())
+		return err
 	}
 	if id != 0x01 {
 		return errors.New(fmt.Sprint("unexpected packet ID: ", id))

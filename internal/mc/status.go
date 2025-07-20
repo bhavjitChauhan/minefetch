@@ -2,7 +2,6 @@ package mc
 
 import (
 	"bytes"
-	"cmp"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -98,26 +97,19 @@ func (icon *Icon) UnmarshalJSON(b []byte) error {
 }
 
 func writeStatusRequest(w io.Writer) error {
-	err1 := writeVarInt(w, 1)    // Packet length
-	err2 := writeVarInt(w, 0x00) // Packet ID
-	return cmp.Or(err1, err2)
+	buf := &bytes.Buffer{}
+	err := writeVarInt(buf, statusPacketIdStatusRequest)
+	if err != nil {
+		return err
+	}
+
+	return writePacket(w, buf.Bytes())
 }
 
 func readStatusResponse(r io.Reader, status *StatusResponse) error {
-	n, err := readVarInt(r)
+	id, buf, err := readPacket(r)
 	if err != nil {
-		return errors.New("failed to read length: " + err.Error())
-	}
-
-	buf := bytes.NewBuffer(make([]byte, n))
-	_, err = io.ReadFull(r, buf.Bytes())
-	if err != nil {
-		return errors.New("failed to read: " + err.Error())
-	}
-
-	id, err := readVarInt(buf)
-	if err != nil {
-		return errors.New("failed to read packet ID: " + err.Error())
+		return err
 	}
 	if id != 0x00 {
 		return errors.New(fmt.Sprint("unexpected packet ID: ", id))
