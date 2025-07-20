@@ -141,7 +141,7 @@ func readQueryHandshake(r io.Reader, id int32) (token int32, err error) {
 	return
 }
 
-func readQueryStatus(r io.Reader, id int32) (status QueryResponse, err error) {
+func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 	br := bufio.NewReader(r)
 
 	err = readQueryPacketHeader(br, queryPacketTypeStat, id)
@@ -178,32 +178,32 @@ func readQueryStatus(r io.Reader, id int32) (status QueryResponse, err error) {
 
 		switch k {
 		case "hostname":
-			status.Motd = v
+			query.Motd = v
 		case "gametype":
-			status.Game.Type = v
+			query.Game.Type = v
 		case "game_id":
-			status.Game.Id = v
+			query.Game.Id = v
 		case "version":
-			status.Version = v
+			query.Version = v
 		case "plugins":
 			i := strings.Index(v, ": ")
 			if i == -1 {
-				status.Software = v
+				query.Software = v
 				break
 			}
-			status.Software = v[:i]
+			query.Software = v[:i]
 			if strings.TrimSpace(v[i+2:]) != "" {
-				status.Plugins = strings.Split(v[i+2:], "; ")
+				query.Plugins = strings.Split(v[i+2:], "; ")
 			}
 		case "map":
-			status.World = v
+			query.World = v
 		case "numplayers":
-			status.Players.Online, err = strconv.Atoi(v)
+			query.Players.Online, err = strconv.Atoi(v)
 			if err != nil {
 				return
 			}
 		case "maxplayers":
-			status.Players.Max, err = strconv.Atoi(v)
+			query.Players.Max, err = strconv.Atoi(v)
 			if err != nil {
 				return
 			}
@@ -213,9 +213,9 @@ func readQueryStatus(r io.Reader, id int32) (status QueryResponse, err error) {
 			if err != nil {
 				return
 			}
-			status.Port = uint16(i)
+			query.Port = uint16(i)
 		case "hostip":
-			status.Ip = net.ParseIP(v)
+			query.Ip = net.ParseIP(v)
 		}
 	}
 
@@ -238,7 +238,7 @@ func readQueryStatus(r io.Reader, id int32) (status QueryResponse, err error) {
 		}
 
 		p = p[:len(p)-1]
-		status.Players.Sample = append(status.Players.Sample, p)
+		query.Players.Sample = append(query.Players.Sample, p)
 	}
 
 	return
