@@ -6,6 +6,8 @@ import (
 	"io"
 )
 
+type uuid [16]byte
+
 func readString(r io.Reader) (s string, err error) {
 	x, err := readVarInt(r)
 	if err != nil {

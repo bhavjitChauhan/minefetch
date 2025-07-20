@@ -20,42 +20,59 @@ func main() {
 	}
 
 	chStatus := make(chan mc.StatusResponse)
-	chQuery := make(chan mc.QueryResponse)
-	chBlocked := make(chan bool)
-	chErr := make(chan error)
-
+	chStatusErr := make(chan error)
 	go func() {
 		status, err := mc.Status(host, port, mc.V1_21_7)
 		if err != nil {
-			chErr <- err
+			chStatusErr <- err
 			return
 		}
 		chStatus <- status
 	}()
 
+	chQuery := make(chan mc.QueryResponse)
+	chQueryErr := make(chan error)
 	go func() {
 		address := net.JoinHostPort(host, strconv.Itoa(int(port)))
 		query, err := mc.Query(address)
 		if err != nil {
-			chErr <- err
+			chQueryErr <- err
 			return
 		}
 		chQuery <- query
 	}()
 
+	chBlocked := make(chan string)
+	chBlockedErr := make(chan error)
 	go func() {
 		blocked, err := mc.IsBlocked(host)
 		if err != nil {
-			chErr <- err
+			chBlockedErr <- err
 			return
 		}
 		chBlocked <- blocked
 	}()
 
+	type offlineData struct {
+		offline     bool
+		whitelisted bool
+	}
+	chOffline := make(chan offlineData)
+	chOfflineErr := make(chan error)
+	go func() {
+		// TODO: use server protocol from status response?
+		offline, whitelisted, err := mc.IsOffline(host, port, mc.V1_21_7)
+		if err != nil {
+			chOfflineErr <- err
+			return
+		}
+		chOffline <- offlineData{offline, whitelisted}
+	}()
+
 	var status mc.StatusResponse
 	select {
 	case status = <-chStatus:
-	case err := <-chErr:
+	case err := <-chStatusErr:
 		log.Fatalln("Failed to get server status:", err)
 	case <-time.After(time.Second * 5):
 		log.Fatalln("The server took too long to respond.")
@@ -67,34 +84,39 @@ func main() {
 	}
 
 	fmt.Print(ansi.Up(iconHeight-1) + ansi.Back(iconWidth))
-	lines := 0
-	lines += printStatus(host, port, &status)
-	fmt.Print(ansi.Fwd(iconWidth + padding))
+	printStatus(host, port, &status)
 
-	var query *mc.QueryResponse
 	select {
-	case q := <-chQuery:
-		query = &q
-	case err := <-chErr:
-		log.Fatalln("Failed to query server:", err)
+	case query := <-chQuery:
+		printQuery(&query)
+	case err := <-chQueryErr:
+		printInfo(info{"Query", ansi.DarkYellow + "Failed: " + err.Error()})
 	case <-time.After(time.Millisecond * 100):
-		break
+		printInfo(info{"Query", ansi.DarkYellow + "Timed out"})
 	}
 
-	fmt.Print(ansi.Back(iconWidth + padding))
-	lines += printQuery(query)
-
-	var blocked bool
 	select {
-	case blocked = <-chBlocked:
-	case err := <-chErr:
-		log.Fatalln("Failed to check if the server is blocked:", err)
+	case blocked := <-chBlocked:
+		printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
+	case err := <-chBlockedErr:
+		printInfo(info{"Blocked", ansi.DarkYellow + "Failed: " + err.Error()})
 	case <-time.After(time.Millisecond * 100):
-		break
+		printInfo(info{"Blocked", ansi.DarkYellow + "Timed out"})
 	}
-	lines += printInfo(info{"Blocked", formatBool(!blocked, "No", "Yes")})
 
-	lines += printPalette()
+	select {
+	case offlineData := <-chOffline:
+		printInfo(info{"Cracked", formatBool(offlineData.offline, ansi.Reset+"Yes", ansi.Reset+"No")})
+		if offlineData.offline {
+			printInfo(info{"Whitelisted", formatBool(!offlineData.whitelisted, "No", "Yes")})
+		}
+	case err := <-chOfflineErr:
+		printInfo(info{"Cracked", ansi.DarkYellow + "Failed: " + err.Error()})
+	case <-time.After(time.Millisecond * 1000):
+		printInfo(info{"Cracked", ansi.DarkYellow + "Timed out"})
+	}
+
+	printPalette()
 	if lines < iconHeight+1 {
 		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
 	}

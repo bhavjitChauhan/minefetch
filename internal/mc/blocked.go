@@ -5,12 +5,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 )
 
-func IsBlocked(host string) (blocked bool, err error) {
+func IsBlocked(host string) (selector string, err error) {
 	resp, err := http.Get("https://sessionserver.mojang.com/blockedservers")
 	if err != nil {
 		return
@@ -22,7 +21,7 @@ func IsBlocked(host string) (blocked bool, err error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	// TODO: encode host in ISO-8859-1
@@ -30,8 +29,9 @@ func IsBlocked(host string) (blocked bool, err error) {
 	host = strings.ToLower(host)
 
 	h := sha1.Sum([]byte(host))
-	blocked = strings.Contains(string(body), hex.EncodeToString(h[:]))
+	blocked := strings.Contains(string(body), hex.EncodeToString(h[:]))
 	if blocked {
+		selector = host
 		return
 	}
 
@@ -48,6 +48,7 @@ func IsBlocked(host string) (blocked bool, err error) {
 		h := sha1.Sum([]byte("*" + host[i:]))
 		blocked = strings.Contains(string(body), hex.EncodeToString(h[:]))
 		if blocked {
+			selector = "*" + host[i:]
 			return
 		}
 		i = strings.LastIndexByte(host[:i], '.')

@@ -15,22 +15,24 @@ import (
 
 const padding = 2
 
+var lines = 0
+
 type info struct {
 	label string
 	data  any
 }
 
-func printInfo(i info) (lines int) {
+func printInfo(i info) {
 	s := strings.Split(fmt.Sprint(i.data), "\n")
 	fmt.Println(ansi.Fwd(iconWidth+padding) + ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
 		fmt.Println(ansi.Fwd(iconWidth+padding+uint(len(i.label))+2) + v)
 	}
 	fmt.Print(ansi.Reset)
-	return len(s)
+	lines += len(s)
 }
 
-func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int) {
+func printStatus(host string, port uint16, status *mc.StatusResponse) {
 	var ii []info
 
 	{
@@ -119,13 +121,11 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) (lines int
 	}
 
 	for _, i := range ii {
-		lines += printInfo(i)
+		printInfo(i)
 	}
-
-	return
 }
 
-func printQuery(query *mc.QueryResponse) (lines int) {
+func printQuery(query *mc.QueryResponse) {
 	var ii []info
 
 	ii = append(ii, info{"Query", formatBool(query != nil, "Enabled", "Disabled")})
@@ -140,13 +140,11 @@ func printQuery(query *mc.QueryResponse) (lines int) {
 	}
 
 	for _, i := range ii {
-		lines += printInfo(i)
+		printInfo(i)
 	}
-
-	return
 }
 
-func printPalette() (lines int) {
+func printPalette() {
 	const codes = "0123456789abcdef"
 	fmt.Print("\n" + ansi.Fwd(iconWidth+2))
 	for i, code := range codes {
@@ -156,7 +154,7 @@ func printPalette() (lines int) {
 		}
 	}
 	fmt.Println(ansi.Reset)
-	return 3
+	lines += 3
 }
 
 func formatBool(bool bool, t, f string) string {
