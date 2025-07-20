@@ -9,7 +9,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"log"
 	"net"
 	"strconv"
 	"strings"
@@ -48,23 +47,27 @@ func Status(host string, port uint16, ver int32) (status StatusResponse, err err
 
 	err = writeHandshake(conn, ver, host, port, intentStatus)
 	if err != nil {
-		log.Fatalln("Failed to write handshake:", err)
+		err = errors.New("Failed to write handshake: " + err.Error())
+		return
 	}
 
 	err = writeStatusRequest(conn)
 	if err != nil {
-		log.Fatalln("Failed to write status request:", err)
+		err = errors.New("Failed to write status request: " + err.Error())
+		return
 	}
 
 	err = readStatusResponse(conn, &status)
 	if err != nil {
-		log.Fatalln("Failed to read status response:", err)
+		err = errors.New("Failed to read status response: " + err.Error())
+		return
 	}
 
 	start := time.Now()
 	err = writePingRequest(conn, start.Unix())
 	if err != nil {
-		log.Fatalln("Failed to write ping request:", err)
+		err = errors.New("Failed to write ping request: " + err.Error())
+		return
 	}
 
 	readPongResponse(conn, start.Unix())
