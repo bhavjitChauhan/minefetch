@@ -13,7 +13,7 @@ import (
 )
 
 // Determines if a server is in offline mode by attempting to login.
-func IsOffline(host string, port uint16, ver int32) (offline bool, whitelisted bool, err error) {
+func IsCracked(host string, port uint16, ver int32) (cracked bool, whitelisted bool, err error) {
 	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
 	if err != nil {
 		return
@@ -50,7 +50,7 @@ func IsOffline(host string, port uint16, ver int32) (offline bool, whitelisted b
 		}
 		if v, ok := v["translate"]; ok {
 			if v == "multiplayer.disconnect.not_whitelisted" {
-				offline, whitelisted = true, true
+				cracked, whitelisted = true, true
 			} else {
 				err = fmt.Errorf("disconnected: %v", v)
 			}
@@ -69,7 +69,7 @@ func IsOffline(host string, port uint16, ver int32) (offline bool, whitelisted b
 		}
 	}
 
-	offline = id == loginPacketIdLoginSuccess
+	cracked = id == loginPacketIdLoginSuccess
 	return
 }
 

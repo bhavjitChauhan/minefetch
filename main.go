@@ -53,20 +53,20 @@ func main() {
 		chBlocked <- blocked
 	}()
 
-	type offlineData struct {
-		offline     bool
+	type crackedData struct {
+		cracked     bool
 		whitelisted bool
 	}
-	chOffline := make(chan offlineData)
-	chOfflineErr := make(chan error)
+	chCracked := make(chan crackedData)
+	chCrackedErr := make(chan error)
 	go func() {
 		// TODO: use server protocol from status response?
-		offline, whitelisted, err := mc.IsOffline(host, port, mc.V1_21_7)
+		cracked, whitelisted, err := mc.IsCracked(host, port, mc.V1_21_7)
 		if err != nil {
-			chOfflineErr <- err
+			chCrackedErr <- err
 			return
 		}
-		chOffline <- offlineData{offline, whitelisted}
+		chCracked <- crackedData{cracked, whitelisted}
 	}()
 
 	var status mc.StatusResponse
@@ -91,7 +91,7 @@ func main() {
 		printQuery(&query)
 	case err := <-chQueryErr:
 		printInfo(info{"Query", ansi.DarkYellow + "Failed: " + err.Error()})
-	case <-time.After(time.Millisecond * 100):
+	case <-time.After(time.Second):
 		printInfo(info{"Query", ansi.DarkYellow + "Timed out"})
 	}
 
@@ -100,19 +100,19 @@ func main() {
 		printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
 	case err := <-chBlockedErr:
 		printInfo(info{"Blocked", ansi.DarkYellow + "Failed: " + err.Error()})
-	case <-time.After(time.Millisecond * 100):
+	case <-time.After(time.Second):
 		printInfo(info{"Blocked", ansi.DarkYellow + "Timed out"})
 	}
 
 	select {
-	case offlineData := <-chOffline:
-		printInfo(info{"Cracked", formatBool(offlineData.offline, ansi.Reset+"Yes", ansi.Reset+"No")})
-		if offlineData.offline {
-			printInfo(info{"Whitelisted", formatBool(!offlineData.whitelisted, "No", "Yes")})
+	case crackedData := <-chCracked:
+		printInfo(info{"Cracked", formatBool(crackedData.cracked, ansi.Reset+"Yes", ansi.Reset+"No")})
+		if crackedData.cracked {
+			printInfo(info{"Whitelist", formatBool(!crackedData.whitelisted, "Off", "On")})
 		}
-	case err := <-chOfflineErr:
+	case err := <-chCrackedErr:
 		printInfo(info{"Cracked", ansi.DarkYellow + "Failed: " + err.Error()})
-	case <-time.After(time.Millisecond * 1000):
+	case <-time.After(time.Second):
 		printInfo(info{"Cracked", ansi.DarkYellow + "Timed out"})
 	}
 
