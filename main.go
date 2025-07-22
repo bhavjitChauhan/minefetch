@@ -90,7 +90,7 @@ func main() {
 	case query := <-chQuery:
 		printQuery(&query)
 	case err := <-chQueryErr:
-		printInfo(info{"Query", ansi.DarkYellow + "Failed: " + err.Error()})
+		printErr("Query", err)
 	case <-time.After(time.Second):
 		printInfo(info{"Query", ansi.DarkYellow + "Timed out"})
 	}
@@ -99,7 +99,7 @@ func main() {
 	case blocked := <-chBlocked:
 		printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
 	case err := <-chBlockedErr:
-		printInfo(info{"Blocked", ansi.DarkYellow + "Failed: " + err.Error()})
+		printErr("Blocked", err)
 	case <-time.After(time.Second):
 		printInfo(info{"Blocked", ansi.DarkYellow + "Timed out"})
 	}
@@ -111,7 +111,7 @@ func main() {
 			printInfo(info{"Whitelist", formatBool(!crackedData.whitelisted, "Off", "On")})
 		}
 	case err := <-chCrackedErr:
-		printInfo(info{"Cracked", ansi.DarkYellow + "Failed: " + err.Error()})
+		printErr("Cracked", err)
 	case <-time.After(time.Second):
 		printInfo(info{"Cracked", ansi.DarkYellow + "Timed out"})
 	}

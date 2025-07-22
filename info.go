@@ -32,6 +32,10 @@ func printInfo(i info) {
 	lines += len(s)
 }
 
+func printErr(label string, err error) {
+	printInfo(info{label, ansi.DarkYellow + "Failed " + ansi.Gray + "(" + err.Error() + ansi.Gray + ")"})
+}
+
 func printStatus(host string, port uint16, status *mc.StatusResponse) {
 	var ii []info
 
