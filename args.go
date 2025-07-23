@@ -28,7 +28,10 @@ var (
 )
 
 func printHelp(flagsHelp string) {
-	fmt.Print("Usage: minefetch <address>\n", flagsHelp)
+	fmt.Print(`Usage:	minefetch
+	minefetch [host] [port]
+	minefetch [host[:port]]
+`, flagsHelp)
 	os.Exit(0)
 }
 
@@ -65,19 +68,26 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 		printHelp(flagsHelp)
 	}
 
-	if fs.NArg() != 1 {
+	switch fs.NArg() {
+	case 0:
+		argHost = "localhost"
+	case 1:
+		argHost, argPort, err = net.SplitHostPort(fs.Arg(0))
+		if err != nil {
+			err = nil
+			argHost = fs.Arg(0)
+		}
+	case 2:
+		argHost = fs.Arg(0)
+		argPort = fs.Arg(1)
+	default:
 		log.Print("Too many arguments.\n\n")
 		printHelp(flagsHelp)
 	}
 
+	host = argHost
 	ver = parseFlagProto()
 
-	argHost, argPort, err = net.SplitHostPort(fs.Arg(0))
-	if err != nil {
-		err = nil
-		argHost = fs.Arg(0)
-	}
-	host = argHost
 	if net.ParseIP(host) == nil {
 		_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 		if err == nil && len(addrs) > 0 {
