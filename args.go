@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var argHost, argPort string
@@ -17,6 +18,7 @@ var argHost, argPort string
 var (
 	flagHelp          = false
 	flagProto         = "1.21.8"
+	flagTimeout       = time.Second
 	flagIcon          = true
 	flagIconSize uint = 32
 	flagQuery         = true
@@ -33,7 +35,8 @@ func printHelp(flagsHelp string) {
 func parseArgs() (host string, port uint16, ver int32, err error) {
 	var fs flag.FlagSet
 	fs.BoolVar(&flagHelp, "help", flagHelp, "(-h)")
-	fs.StringVar(&flagProto, "proto", flagProto, "Protocol version to use in requests. (-p)")
+	fs.StringVar(&flagProto, "proto", flagProto, "Protocol version to use for requests. (-p)")
+	fs.DurationVar(&flagTimeout, "timeout", flagTimeout, "Maximum time to wait for a response before timing out. (-t)")
 	fs.BoolVar(&flagIcon, "icon", flagIcon, "Print the server icon. (-i)")
 	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "Icon size in pixels.")
 	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
@@ -50,6 +53,7 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	}
 
 	fs.BoolVar(&flagHelp, "h", flagHelp, "")
+	fs.DurationVar(&flagTimeout, "t", flagTimeout, "")
 	fs.StringVar(&flagProto, "p", flagProto, "")
 	fs.BoolVar(&flagIcon, "i", flagIcon, "")
 	fs.BoolVar(&flagQuery, "q", flagQuery, "")

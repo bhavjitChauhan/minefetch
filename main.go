@@ -19,6 +19,8 @@ func main() {
 		log.Fatalln("Failed to parse arguments:", err)
 	}
 
+	timeout := time.After(flagTimeout)
+
 	chStatus := make(chan mc.StatusResponse)
 	chStatusErr := make(chan error)
 	go func() {
@@ -86,7 +88,7 @@ func main() {
 	case status = <-chStatus:
 	case err := <-chStatusErr:
 		log.Fatalln("Failed to get server status:", err)
-	case <-time.After(time.Second * 5):
+	case <-timeout:
 		log.Fatalln("The server took too long to respond.")
 	}
 
@@ -108,7 +110,7 @@ func main() {
 			printQuery(&query)
 		case err := <-chQueryErr:
 			printErr("Query", err)
-		case <-time.After(time.Second):
+		case <-timeout:
 			printInfo(info{"Query", ansi.DarkYellow + "Timed out"})
 		}
 	}
@@ -119,7 +121,7 @@ func main() {
 			printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
 		case err := <-chBlockedErr:
 			printErr("Blocked", err)
-		case <-time.After(time.Second):
+		case <-timeout:
 			printInfo(info{"Blocked", ansi.DarkYellow + "Timed out"})
 		}
 	}
@@ -133,7 +135,7 @@ func main() {
 			}
 		case err := <-chCrackedErr:
 			printErr("Cracked", err)
-		case <-time.After(time.Second):
+		case <-timeout:
 			printInfo(info{"Cracked", ansi.DarkYellow + "Timed out"})
 		}
 	}
