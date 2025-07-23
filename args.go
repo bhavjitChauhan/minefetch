@@ -39,14 +39,13 @@ func parseArgs() (host string, port uint16, err error) {
 	}
 
 	var fs flag.FlagSet
-	// TODO: add usage
 	fs.BoolVar(&flagHelp, "help", flagHelp, "(-h)")
-	fs.BoolVar(&flagIcon, "icon", flagIcon, "(-i)")
-	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "")
-	fs.BoolVar(&flagQuery, "query", flagQuery, "(-q)")
-	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "(-b)")
-	fs.BoolVar(&flagCracked, "cracked", flagCracked, "(-c)")
-	fs.BoolVar(&flagPalette, "palette", flagPalette, "(-p)")
+	fs.BoolVar(&flagIcon, "icon", flagIcon, "Print the server icon. (-i)")
+	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "Icon size in pixels.")
+	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
+	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b)")
+	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c)")
+	fs.BoolVar(&flagPalette, "palette", flagPalette, "Print Minecraft's formatting code colors. (-p)")
 
 	var flagsHelp string
 	{
