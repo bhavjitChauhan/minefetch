@@ -7,7 +7,6 @@ import (
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
 	"net"
-	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -24,9 +23,16 @@ type info struct {
 
 func printInfo(i info) {
 	s := strings.Split(fmt.Sprint(i.data), "\n")
-	fmt.Println(ansi.Fwd(iconWidth+padding) + ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
+	if flagIcon {
+		fmt.Print(ansi.Fwd(iconWidth + padding))
+	}
+	fmt.Println(ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
-		fmt.Println(ansi.Fwd(iconWidth+padding+uint(len(i.label))+2) + v)
+		fwd := uint(len(i.label)) + 2
+		if flagIcon {
+			fwd += iconWidth + padding
+		}
+		fmt.Println(ansi.Fwd(fwd) + v)
 	}
 	fmt.Print(ansi.Reset)
 	lines += len(s)
@@ -69,11 +75,6 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) {
 	}
 
 	{
-		argHost, _, err := net.SplitHostPort(os.Args[1])
-		if err != nil {
-			argHost = os.Args[1]
-		}
-
 		ip := argHost
 		if net.ParseIP(argHost) == nil {
 			ips, err := net.LookupIP(host)
@@ -150,11 +151,17 @@ func printQuery(query *mc.QueryResponse) {
 
 func printPalette() {
 	const codes = "0123456789abcdef"
-	fmt.Print("\n" + ansi.Fwd(iconWidth+2))
+	fmt.Print("\n")
+	if flagIcon {
+		fmt.Print(ansi.Fwd(iconWidth + padding))
+	}
 	for i, code := range codes {
 		fmt.Print(ansi.Bg(mc.ParseColor(code)) + "   ")
 		if (i + 1) == (len(codes) / 2) {
-			fmt.Print(ansi.Reset + "\n" + ansi.Fwd(iconWidth+2))
+			fmt.Print(ansi.Reset + "\n")
+			if flagIcon {
+				fmt.Print(ansi.Fwd(iconWidth + padding))
+			}
 		}
 	}
 	fmt.Println(ansi.Reset)
