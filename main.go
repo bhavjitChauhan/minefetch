@@ -38,7 +38,11 @@ func main() {
 		chQuery = make(chan mc.QueryResponse)
 		chQueryErr = make(chan error)
 		go func() {
-			address := net.JoinHostPort(host, strconv.Itoa(int(port)))
+			queryPort := flagQueryPort
+			if queryPort == 0 {
+				queryPort = uint(port)
+			}
+			address := net.JoinHostPort(host, strconv.Itoa(int(queryPort)))
 			query, err := mc.Query(address)
 			if err != nil {
 				chQueryErr <- err
@@ -80,6 +84,16 @@ func main() {
 				return
 			}
 			chCracked <- crackedData{cracked, whitelisted}
+		}()
+	}
+
+	var chRcon chan bool
+	if flagRcon {
+		chRcon = make(chan bool)
+		go func() {
+			address := net.JoinHostPort(host, strconv.Itoa(int(flagRconPort)))
+			enabled, _ := mc.IsRconEnabled(address)
+			chRcon <- enabled
 		}()
 	}
 
@@ -137,6 +151,15 @@ func main() {
 			printErr("Cracked", err)
 		case <-timeout:
 			printInfo(info{"Cracked", ansi.DarkYellow + "Timed out"})
+		}
+	}
+
+	if flagRcon {
+		select {
+		case enabled := <-chRcon:
+			printInfo(info{"RCON", formatBool(!enabled, "Disabled", "Enabled")})
+		case <-timeout:
+			printInfo(info{"RCON", ansi.DarkYellow + "Timed out"})
 		}
 	}
 

@@ -16,15 +16,18 @@ import (
 var argHost, argPort string
 
 var (
-	flagHelp          = false
-	flagProto         = "1.21.8"
-	flagTimeout       = time.Second
-	flagIcon          = true
-	flagIconSize uint = 32
-	flagQuery         = true
-	flagBlocked       = true
-	flagCracked       = false
-	flagPalette       = true
+	flagHelp           = false
+	flagProto          = "1.21.8"
+	flagTimeout        = time.Second
+	flagIcon           = true
+	flagIconSize  uint = 32
+	flagQuery          = true
+	flagQueryPort uint
+	flagBlocked        = true
+	flagCracked        = false
+	flagRcon           = false
+	flagRconPort  uint = 25575
+	flagPalette        = true
 )
 
 func printHelp(flagsHelp string) {
@@ -43,8 +46,11 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	fs.BoolVar(&flagIcon, "icon", flagIcon, "Print the server icon. (-i)")
 	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "Icon size in pixels.")
 	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
+	fs.UintVar(&flagQueryPort, "query-port", flagQueryPort, "Port to use for the query protocol. (default port)")
 	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b)")
 	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c)")
+	fs.BoolVar(&flagRcon, "rcon", flagRcon, "Check if the RCON protocol is enabled. (-r)")
+	fs.UintVar(&flagRconPort, "rcon-port", flagRconPort, "Port to use for the RCON protocol.")
 	fs.BoolVar(&flagPalette, "palette", flagPalette, "Print Minecraft's formatting code colors")
 
 	var flagsHelp string
@@ -62,6 +68,7 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	fs.BoolVar(&flagQuery, "q", flagQuery, "")
 	fs.BoolVar(&flagBlocked, "b", flagBlocked, "")
 	fs.BoolVar(&flagCracked, "c", flagCracked, "")
+	fs.BoolVar(&flagRcon, "r", flagRcon, "")
 	fs.Parse(os.Args[1:])
 
 	if flagHelp {
