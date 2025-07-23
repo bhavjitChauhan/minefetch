@@ -24,13 +24,13 @@ type info struct {
 func printInfo(i info) {
 	s := strings.Split(fmt.Sprint(i.data), "\n")
 	if flagIcon {
-		fmt.Print(ansi.Fwd(iconWidth + padding))
+		fmt.Print(ansi.Fwd(flagIconSize + padding))
 	}
 	fmt.Println(ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
 		fwd := uint(len(i.label)) + 2
 		if flagIcon {
-			fwd += iconWidth + padding
+			fwd += flagIconSize + padding
 		}
 		fmt.Println(ansi.Fwd(fwd) + v)
 	}
@@ -153,14 +153,14 @@ func printPalette() {
 	const codes = "0123456789abcdef"
 	fmt.Print("\n")
 	if flagIcon {
-		fmt.Print(ansi.Fwd(iconWidth + padding))
+		fmt.Print(ansi.Fwd(flagIconSize + padding))
 	}
 	for i, code := range codes {
 		fmt.Print(ansi.Bg(mc.ParseColor(code)) + "   ")
 		if (i + 1) == (len(codes) / 2) {
 			fmt.Print(ansi.Reset + "\n")
 			if flagIcon {
-				fmt.Print(ansi.Fwd(iconWidth + padding))
+				fmt.Print(ansi.Fwd(flagIconSize + padding))
 			}
 		}
 	}

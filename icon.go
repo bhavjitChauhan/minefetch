@@ -9,11 +9,14 @@ import (
 	"minefetch/internal/mc"
 )
 
-const iconWidth = 32
-const iconHeight = iconWidth / 2
+const iconAspectRatio = 0.5
 
 //go:embed unknown_server.png
 var defaultIcon []byte
+
+func iconHeight() uint {
+	return uint(float64(flagIconSize) * iconAspectRatio)
+}
 
 func printIcon(icon *mc.Icon) error {
 	img := icon.Image
@@ -25,7 +28,7 @@ func printIcon(icon *mc.Icon) error {
 		return err
 	}
 
-	f := float64(iconWidth) / float64(img.Bounds().Dy())
+	f := float64(flagIconSize) / float64(img.Bounds().Dy())
 	if f != 1 {
 		img = scale.Lanczos(img, f)
 	}

@@ -14,12 +14,13 @@ import (
 var argHost, argPort string
 
 var (
-	flagHelp    = false
-	flagIcon    = true
-	flagQuery   = true
-	flagBlocked = true
-	flagCracked = false
-	flagPalette = true
+	flagHelp          = false
+	flagIcon          = true
+	flagIconSize uint = 32
+	flagQuery         = true
+	flagBlocked       = true
+	flagCracked       = false
+	flagPalette       = true
 )
 
 func printHelp(flagsHelp string) {
@@ -41,6 +42,7 @@ func parseArgs() (host string, port uint16, err error) {
 	// TODO: add usage
 	fs.BoolVar(&flagHelp, "help", flagHelp, "(-h)")
 	fs.BoolVar(&flagIcon, "icon", flagIcon, "(-i)")
+	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "")
 	fs.BoolVar(&flagQuery, "query", flagQuery, "(-q)")
 	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "(-b)")
 	fs.BoolVar(&flagCracked, "cracked", flagCracked, "(-c)")

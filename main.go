@@ -98,7 +98,7 @@ func main() {
 	}
 
 	if flagIcon {
-		fmt.Print(ansi.Up(iconHeight-1) + ansi.Back(iconWidth))
+		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(flagIconSize))
 	}
 	printStatus(host, port, &status)
 
@@ -142,8 +142,8 @@ func main() {
 		printPalette()
 	}
 
-	if flagIcon && lines < iconHeight+1 {
-		fmt.Print(strings.Repeat("\n", iconHeight-lines+1))
+	if flagIcon && lines < int(iconHeight())+1 {
+		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
 	} else {
 		fmt.Print("\n")
 	}
