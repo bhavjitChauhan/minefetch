@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"minefetch/internal/mc"
 	"net"
 	"os"
 	"strconv"
@@ -15,6 +16,7 @@ var argHost, argPort string
 
 var (
 	flagHelp          = false
+	flagProto         = "1.21.8"
 	flagIcon          = true
 	flagIconSize uint = 32
 	flagQuery         = true
@@ -25,27 +27,19 @@ var (
 
 func printHelp(flagsHelp string) {
 	fmt.Print("Usage: minefetch <address>\n", flagsHelp)
+	os.Exit(0)
 }
 
-func parseArgs() (host string, port uint16, err error) {
-	var args, flags []string
-
-	for _, arg := range os.Args[1:] {
-		if arg[0] == '-' {
-			flags = append(flags, arg)
-		} else {
-			args = append(args, arg)
-		}
-	}
-
+func parseArgs() (host string, port uint16, ver int32, err error) {
 	var fs flag.FlagSet
 	fs.BoolVar(&flagHelp, "help", flagHelp, "(-h)")
+	fs.StringVar(&flagProto, "proto", flagProto, "Protocol version to use in requests. (-p)")
 	fs.BoolVar(&flagIcon, "icon", flagIcon, "Print the server icon. (-i)")
 	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "Icon size in pixels.")
 	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
 	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b)")
 	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c)")
-	fs.BoolVar(&flagPalette, "palette", flagPalette, "Print Minecraft's formatting code colors. (-p)")
+	fs.BoolVar(&flagPalette, "palette", flagPalette, "Print Minecraft's formatting code colors")
 
 	var flagsHelp string
 	{
@@ -55,31 +49,29 @@ func parseArgs() (host string, port uint16, err error) {
 		flagsHelp = buf.String()
 	}
 
-	if len(args) != 1 {
-		printHelp(flagsHelp)
-		os.Exit(0)
-	}
-
 	fs.BoolVar(&flagHelp, "h", flagHelp, "")
+	fs.StringVar(&flagProto, "p", flagProto, "")
 	fs.BoolVar(&flagIcon, "i", flagIcon, "")
 	fs.BoolVar(&flagQuery, "q", flagQuery, "")
 	fs.BoolVar(&flagBlocked, "b", flagBlocked, "")
 	fs.BoolVar(&flagCracked, "c", flagCracked, "")
-	fs.BoolVar(&flagPalette, "p", flagPalette, "")
-	fs.Parse(flags)
+	fs.Parse(os.Args[1:])
 
 	if flagHelp {
 		printHelp(flagsHelp)
-		os.Exit(0)
 	}
 
-	if fs.NArg() != 0 {
-		log.Panicln("Recieved argument in flags")
+	if fs.NArg() != 1 {
+		log.Print("Too many arguments.\n\n")
+		printHelp(flagsHelp)
 	}
 
-	argHost, argPort, err = net.SplitHostPort(args[0])
+	ver = parseFlagProto()
+
+	argHost, argPort, err = net.SplitHostPort(fs.Arg(0))
 	if err != nil {
-		argHost = args[0]
+		err = nil
+		argHost = fs.Arg(0)
 	}
 	host = argHost
 	if net.ParseIP(host) == nil {
@@ -99,5 +91,20 @@ func parseArgs() (host string, port uint16, err error) {
 	} else if port == 0 {
 		port = 25565
 	}
-	return host, port, nil
+
+	return
+}
+
+func parseFlagProto() int32 {
+	v, ok := mc.VersionNameId[flagProto]
+	if ok {
+		return v
+	}
+
+	i, err := strconv.Atoi(flagProto)
+	if err != nil {
+		log.Fatalln("Failed to parse protocol version:", flagProto)
+	}
+
+	return int32(i)
 }

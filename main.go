@@ -14,7 +14,7 @@ import (
 func main() {
 	log.SetFlags(0)
 
-	host, port, err := parseArgs()
+	host, port, ver, err := parseArgs()
 	if err != nil {
 		log.Fatalln("Failed to parse arguments:", err)
 	}
@@ -22,7 +22,7 @@ func main() {
 	chStatus := make(chan mc.StatusResponse)
 	chStatusErr := make(chan error)
 	go func() {
-		status, err := mc.Status(host, port, mc.V1_21_7)
+		status, err := mc.Status(host, port, ver)
 		if err != nil {
 			chStatusErr <- err
 			return
@@ -72,7 +72,7 @@ func main() {
 		chCrackedErr = make(chan error)
 		go func() {
 			// TODO: use server protocol from status response?
-			cracked, whitelisted, err := mc.IsCracked(host, port, mc.V1_21_7)
+			cracked, whitelisted, err := mc.IsCracked(host, port, ver)
 			if err != nil {
 				chCrackedErr <- err
 				return

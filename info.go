@@ -97,7 +97,7 @@ func printStatus(host string, port uint16, status *mc.StatusResponse) {
 
 	{
 		var s string
-		protoVerName, ok := mc.ProtoVerName[status.Version.Protocol]
+		protoVerName, ok := mc.VersionIdName[status.Version.Protocol]
 		if ok {
 			s = fmt.Sprintf("%v "+ansi.Gray+"(%v)", protoVerName, status.Version.Protocol)
 		} else {
