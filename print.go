@@ -3,18 +3,33 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"minefetch/internal/ansi"
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
 	"net"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
+)
+
+const (
+	idQuery = iota
+	idBlocked
+	idCracked
+	idRcon
 )
 
 const padding = 2
 
 var lines = 0
+
+type result struct {
+	id  int
+	v   any
+	err error
+}
 
 type info struct {
 	label string
@@ -42,7 +57,38 @@ func printErr(label string, err error) {
 	printInfo(info{label, ansi.DarkYellow + "Failed " + ansi.Gray + "(" + err.Error() + ansi.Gray + ")"})
 }
 
-func printStatus(host string, port uint16, status *mc.StatusResponse) {
+func printTimeout(label string) {
+	printInfo(info{label, ansi.DarkYellow + "Timed out"})
+}
+
+func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
+	var result result
+	select {
+	case result = <-ch:
+	case <-timeout:
+		log.Fatalln("The server took too long to respond.")
+	}
+
+	if result.err != nil {
+		log.Fatalln("Failed to get server status:", result.err)
+	}
+
+	status, ok := result.v.(mc.StatusResponse)
+	if !ok {
+		log.Panicln("Unexpected result value for status:", result.v)
+	}
+
+	if flagIcon {
+		err := printIcon(&status.Favicon)
+		if err != nil {
+			log.Fatalln("Failed to print icon:", err)
+		}
+	}
+
+	if flagIcon {
+		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(flagIconSize))
+	}
+
 	var ii []info
 
 	{
@@ -149,6 +195,62 @@ func printQuery(query *mc.QueryResponse) {
 	}
 }
 
+func printResult[T any](result result, label string, fn func(T)) {
+	switch {
+	case result.err != nil:
+		printErr(label, result.err)
+	case result.v != nil:
+		v, ok := result.v.(T)
+		if !ok {
+			log.Panicf("Unexpected result value for %v: %v", label, result.v)
+		}
+		fn(v)
+	default:
+		printTimeout(label)
+	}
+}
+
+func printResults(ch <-chan result, timeout <-chan time.Time) {
+	var results [4]result
+
+	n := boolInt(flagQuery) + boolInt(flagBlocked) + boolInt(flagCracked) + boolInt(flagRcon)
+	for ; n > 0; n-- {
+		select {
+		case result := <-ch:
+			results[result.id] = result
+		case <-timeout:
+			n = 0
+		}
+	}
+
+	if flagQuery {
+		printResult(results[idQuery], "Query", func(query mc.QueryResponse) {
+			printQuery(&query)
+		})
+	}
+
+	if flagBlocked {
+		printResult(results[idBlocked], "Blocked", func(blocked string) {
+			printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
+		})
+	}
+
+	if flagCracked {
+		printResult(results[idCracked], "Cracked", func(crackedWhitelisted [2]bool) {
+			printInfo(info{"Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No")})
+			if crackedWhitelisted[0] {
+				printInfo(info{"Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On")})
+			}
+		})
+	}
+
+	if flagRcon {
+		printResult(results[idRcon], "RCON", func(enabled bool) {
+			printInfo(info{"RCON", formatBool(!enabled, "Disabled", "Enabled")})
+		})
+	}
+}
+
 func printPalette() {
 	const codes = "0123456789abcdef"
 	fmt.Print("\n")
@@ -192,4 +294,11 @@ func formatColorType(t pngconfig.ColorType) string {
 		return "RGBA"
 	}
 	return "unknown"
+}
+
+func boolInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
