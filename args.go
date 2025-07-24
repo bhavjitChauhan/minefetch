@@ -48,8 +48,8 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
 	fs.UintVar(&flagQueryPort, "query-port", flagQueryPort, "Port to use for the query protocol. (default port)")
 	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b)")
-	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c)")
-	fs.BoolVar(&flagRcon, "rcon", flagRcon, "Check if the RCON protocol is enabled. (-r)")
+	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c) (default false)")
+	fs.BoolVar(&flagRcon, "rcon", flagRcon, "Check if the RCON protocol is enabled. (-r) (default false)")
 	fs.UintVar(&flagRconPort, "rcon-port", flagRconPort, "Port to use for the RCON protocol.")
 	fs.BoolVar(&flagPalette, "palette", flagPalette, "Print Minecraft's formatting code colors")
 
