@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -37,6 +38,10 @@ func readRconPacket(r io.Reader) (id int32, t int32, payload string, err error) 
 	var n int32
 	err = binary.Read(r, binary.LittleEndian, &n)
 	if err != nil {
+		return
+	}
+	if n < 9 {
+		err = fmt.Errorf("invalid packet length: %v", n)
 		return
 	}
 
