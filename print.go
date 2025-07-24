@@ -36,14 +36,14 @@ type info struct {
 	data  any
 }
 
-func printInfo(i info) {
-	s := strings.Split(fmt.Sprint(i.data), "\n")
+func printInfo(label string, data any) {
+	s := strings.Split(fmt.Sprint(data), "\n")
 	if flagIcon {
 		fmt.Print(ansi.Fwd(flagIconSize + padding))
 	}
-	fmt.Println(ansi.Bold + ansi.Blue + i.label + ansi.Reset + ": " + s[0])
+	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
-		fwd := uint(len(i.label)) + 2
+		fwd := uint(len(label)) + 2
 		if flagIcon {
 			fwd += flagIconSize + padding
 		}
@@ -54,11 +54,11 @@ func printInfo(i info) {
 }
 
 func printErr(label string, err error) {
-	printInfo(info{label, ansi.DarkYellow + "Failed " + ansi.Gray + "(" + err.Error() + ansi.Gray + ")"})
+	printInfo(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
 }
 
 func printTimeout(label string) {
-	printInfo(info{label, ansi.DarkYellow + "Timed out"})
+	printInfo(label, ansi.DarkYellow+"Timed out")
 }
 
 func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
@@ -172,7 +172,7 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 	}
 
 	for _, i := range ii {
-		printInfo(i)
+		printInfo(i.label, i.data)
 	}
 }
 
@@ -191,7 +191,7 @@ func printQuery(query *mc.QueryResponse) {
 	}
 
 	for _, i := range ii {
-		printInfo(i)
+		printInfo(i.label, i.data)
 	}
 }
 
@@ -231,22 +231,22 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 
 	if flagBlocked {
 		printResult(results[idBlocked], "Blocked", func(blocked string) {
-			printInfo(info{"Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked))})
+			printInfo("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
 		})
 	}
 
 	if flagCracked {
 		printResult(results[idCracked], "Cracked", func(crackedWhitelisted [2]bool) {
-			printInfo(info{"Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No")})
+			printInfo("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
 			if crackedWhitelisted[0] {
-				printInfo(info{"Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On")})
+				printInfo("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
 			}
 		})
 	}
 
 	if flagRcon {
 		printResult(results[idRcon], "RCON", func(enabled bool) {
-			printInfo(info{"RCON", formatBool(!enabled, "Disabled", "Enabled")})
+			printInfo("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		})
 	}
 }
