@@ -21,16 +21,16 @@ type StatusResponse struct {
 		Protocol int32
 	}
 	EnforcesSecureChat bool
-	Description        Text
+	Motd               Text `json:"description"`
 	Players            struct {
 		Max    int
 		Online int
 		Sample []struct {
-			Id   string
+			Uuid string `json:"id"`
 			Name string
 		}
 	}
-	Favicon Icon
+	Icon Icon `json:"favicon"`
 	// https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
 	PreventsChatReports bool
 	Latency             time.Duration

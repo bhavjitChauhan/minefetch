@@ -79,7 +79,7 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 	}
 
 	if flagIcon {
-		err := printIcon(&status.Favicon)
+		err := printIcon(&status.Icon)
 		if err != nil {
 			log.Fatalln("Failed to print icon:", err)
 		}
@@ -92,7 +92,7 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 	var ii []info
 
 	{
-		ss := strings.Split(status.Description.Ansi(), "\n")
+		ss := strings.Split(status.Motd.Ansi(), "\n")
 		for i, s := range ss {
 			ss[i] = ansi.TrimSpace(s)
 		}
@@ -153,8 +153,8 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		ii = append(ii, info{"Protocol", s})
 	}
 
-	if status.Favicon.Image != nil {
-		iconConfig, _ := pngconfig.DecodeConfig(base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(status.Favicon.Raw, "data:image/png;base64,"))))
+	if status.Icon.Image != nil {
+		iconConfig, _ := pngconfig.DecodeConfig(base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(status.Icon.Raw, "data:image/png;base64,"))))
 		interlaced := ""
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "
