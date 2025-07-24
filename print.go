@@ -31,12 +31,7 @@ type result struct {
 	err error
 }
 
-type info struct {
-	label string
-	data  any
-}
-
-func printInfo(label string, data any) {
+func printData(label string, data any) {
 	s := strings.Split(fmt.Sprint(data), "\n")
 	if flagIcon {
 		fmt.Print(ansi.Fwd(flagIconSize + padding))
@@ -54,11 +49,11 @@ func printInfo(label string, data any) {
 }
 
 func printErr(label string, err error) {
-	printInfo(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
+	printData(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
 }
 
 func printTimeout(label string) {
-	printInfo(label, ansi.DarkYellow+"Timed out")
+	printData(label, ansi.DarkYellow+"Timed out")
 }
 
 func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
@@ -89,8 +84,6 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(flagIconSize))
 	}
 
-	var ii []info
-
 	{
 		ss := strings.Split(status.Motd.Ansi(), "\n")
 		for i, s := range ss {
@@ -105,19 +98,19 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 			j := (i + 1) % 2
 			ss[i] = strings.Repeat(" ", (runeCounts[j]-runeCounts[i])/2) + ss[i]
 		}
-		ii = append(ii, info{"MOTD", strings.Join(ss, "\n")})
+		printData("MOTD", strings.Join(ss, "\n"))
 	}
 
-	ii = append(ii, info{"Ping", fmt.Sprint(status.Latency.Milliseconds(), " ms")})
+	printData("Ping", fmt.Sprint(status.Latency.Milliseconds(), " ms"))
 
-	ii = append(ii, info{"Version", mc.LegacyTextAnsi(status.Version.Name)})
+	printData("Version", mc.LegacyTextAnsi(status.Version.Name))
 
 	{
 		s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", status.Players.Online, status.Players.Max)
 		for _, v := range status.Players.Sample {
 			s += "\n" + mc.LegacyTextAnsi(v.Name)
 		}
-		ii = append(ii, info{"Players", s})
+		printData("Players", s)
 	}
 
 	{
@@ -129,17 +122,17 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 			}
 		}
 		if argHost != ip {
-			ii = append(ii, info{"Host", argHost})
+			printData("Host", argHost)
 		}
 		if host != argHost {
-			ii = append(ii, info{"SRV", host})
+			printData("SRV", host)
 		}
 		if ip != "" {
-			ii = append(ii, info{"IP", ip})
+			printData("IP", ip)
 		}
 	}
 
-	ii = append(ii, info{"Port", port})
+	printData("Port", port)
 
 	{
 		var s string
@@ -149,8 +142,7 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		} else {
 			s = strconv.Itoa(int(status.Version.Protocol))
 		}
-
-		ii = append(ii, info{"Protocol", s})
+		printData("Protocol", s)
 	}
 
 	if status.Icon.Image != nil {
@@ -159,39 +151,29 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "
 		}
-		ii = append(ii, info{"Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, formatColorType(iconConfig.ColorType))})
+		printData("Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, formatColorType(iconConfig.ColorType)))
 	} else {
-		ii = append(ii, info{"Icon", "Default"})
+		printData("Icon", "Default")
 	}
 
-	ii = append(ii, info{"Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced")})
+	printData("Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced"))
 
 	if status.PreventsChatReports {
-		ii = append(ii, info{"Prevents chat reports", ansi.Green + "Yes"})
+		printData("Prevents chat reports", ansi.Green+"Yes")
 
-	}
-
-	for _, i := range ii {
-		printInfo(i.label, i.data)
 	}
 }
 
 func printQuery(query *mc.QueryResponse) {
-	var ii []info
-
-	ii = append(ii, info{"Query", formatBool(query != nil, "Enabled", "Disabled")})
+	printData("Query", formatBool(query != nil, "Enabled", "Disabled"))
 	if query != nil {
 		if query.Software != "" {
-			ii = append(ii, info{"Software", query.Software})
+			printData("Software", query.Software)
 		}
 
 		if len(query.Plugins) > 0 {
-			ii = append(ii, info{"Plugins", strings.Join(query.Plugins, "\n")})
+			printData("Plugins", strings.Join(query.Plugins, "\n"))
 		}
-	}
-
-	for _, i := range ii {
-		printInfo(i.label, i.data)
 	}
 }
 
@@ -231,22 +213,22 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 
 	if flagBlocked {
 		printResult(results[idBlocked], "Blocked", func(blocked string) {
-			printInfo("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
+			printData("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
 		})
 	}
 
 	if flagCracked {
 		printResult(results[idCracked], "Cracked", func(crackedWhitelisted [2]bool) {
-			printInfo("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
+			printData("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
 			if crackedWhitelisted[0] {
-				printInfo("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
+				printData("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
 			}
 		})
 	}
 
 	if flagRcon {
 		printResult(results[idRcon], "RCON", func(enabled bool) {
-			printInfo("RCON", formatBool(!enabled, "Disabled", "Enabled"))
+			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		})
 	}
 }
