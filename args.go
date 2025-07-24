@@ -21,9 +21,9 @@ var (
 	flagTimeout        = time.Second
 	flagIcon           = true
 	flagIconSize  uint = 32
-	flagQuery          = true
+	flagQuery          = false
 	flagQueryPort uint
-	flagBlocked        = true
+	flagBlocked        = false
 	flagCracked        = false
 	flagRcon           = false
 	flagRconPort  uint = 25575
@@ -45,9 +45,9 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	fs.DurationVar(&flagTimeout, "timeout", flagTimeout, "Maximum time to wait for a response before timing out. (-t)")
 	fs.BoolVar(&flagIcon, "icon", flagIcon, "Print the server icon. (-i)")
 	fs.UintVar(&flagIconSize, "icon-size", flagIconSize, "Icon size in pixels.")
-	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q)")
+	fs.BoolVar(&flagQuery, "query", flagQuery, "Attempt to communicate using the query protocol. (-q) (default false)")
 	fs.UintVar(&flagQueryPort, "query-port", flagQueryPort, "Port to use for the query protocol. (default port)")
-	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b)")
+	fs.BoolVar(&flagBlocked, "blocked", flagBlocked, "Check the host against Mojang's blocklist. (-b) (default false)")
 	fs.BoolVar(&flagCracked, "cracked", flagCracked, "Attempt to login using an offline player. (-c) (default false)")
 	fs.BoolVar(&flagRcon, "rcon", flagRcon, "Check if the RCON protocol is enabled. (-r) (default false)")
 	fs.UintVar(&flagRconPort, "rcon-port", flagRconPort, "Port to use for the RCON protocol.")
