@@ -101,7 +101,19 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		printData("MOTD", strings.Join(ss, "\n"))
 	}
 
-	printData("Ping", fmt.Sprint(status.Latency.Milliseconds(), " ms"))
+	{
+		ms := status.Latency.Milliseconds()
+		var c string
+		switch {
+		case ms < 50:
+			c = ansi.Green
+		case ms < 100:
+			c = ansi.Yellow
+		default:
+			c = ansi.Red
+		}
+		printData("Ping", fmt.Sprint(c, ms, " ms"))
+	}
 
 	printData("Version", mc.LegacyTextAnsi(status.Version.Name))
 
