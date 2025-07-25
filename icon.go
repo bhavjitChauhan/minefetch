@@ -15,7 +15,7 @@ const iconAspectRatio = 0.5
 var defaultIcon []byte
 
 func iconHeight() uint {
-	return uint(float64(flagIconSize) * iconAspectRatio)
+	return uint(float64(cfg.iconSize) * iconAspectRatio)
 }
 
 func printIcon(icon *mc.Icon) error {
@@ -28,7 +28,7 @@ func printIcon(icon *mc.Icon) error {
 		return err
 	}
 
-	f := float64(flagIconSize) / float64(img.Bounds().Dy())
+	f := float64(cfg.iconSize) / float64(img.Bounds().Dy())
 	if f != 1 {
 		img = scale.Lanczos(img, f)
 	}

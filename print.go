@@ -33,14 +33,14 @@ type result struct {
 
 func printData(label string, data any) {
 	s := strings.Split(fmt.Sprint(data), "\n")
-	if flagIcon {
-		fmt.Print(ansi.Fwd(flagIconSize + padding))
+	if !cfg.noIcon {
+		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
 	}
 	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
 		fwd := uint(len(label)) + 2
-		if flagIcon {
-			fwd += flagIconSize + padding
+		if !cfg.noIcon {
+			fwd += cfg.iconSize + padding
 		}
 		fmt.Println(ansi.Fwd(fwd) + v)
 	}
@@ -73,15 +73,12 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 		log.Panicln("Unexpected result value for status:", result.v)
 	}
 
-	if flagIcon {
+	if !cfg.noIcon {
 		err := printIcon(&status.Icon)
 		if err != nil {
 			log.Fatalln("Failed to print icon:", err)
 		}
-	}
-
-	if flagIcon {
-		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(flagIconSize))
+		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
 	}
 
 	{
@@ -90,13 +87,13 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 			ss[i] = ansi.TrimSpace(s)
 		}
 		if len(ss) > 1 {
-			runeCounts := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
+			n := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
 			i := 0
-			if runeCounts[1] < runeCounts[0] {
+			if n[1] < n[0] {
 				i = 1
 			}
 			j := (i + 1) % 2
-			ss[i] = strings.Repeat(" ", (runeCounts[j]-runeCounts[i])/2) + ss[i]
+			ss[i] = strings.Repeat(" ", (n[j]-n[i])/2) + ss[i]
 		}
 		printData("MOTD", strings.Join(ss, "\n"))
 	}
@@ -207,7 +204,7 @@ func printResult[T any](result result, label string, fn func(T)) {
 func printResults(ch <-chan result, timeout <-chan time.Time) {
 	var results [4]result
 
-	n := boolInt(flagQuery) + boolInt(flagBlocked) + boolInt(flagCracked) + boolInt(flagRcon)
+	n := boolInt(cfg.query) + boolInt(cfg.blocked) + boolInt(cfg.cracked) + boolInt(cfg.rcon)
 	for ; n > 0; n-- {
 		select {
 		case result := <-ch:
@@ -217,19 +214,19 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 		}
 	}
 
-	if flagQuery {
+	if cfg.query {
 		printResult(results[idQuery], "Query", func(query mc.QueryResponse) {
 			printQuery(&query)
 		})
 	}
 
-	if flagBlocked {
+	if cfg.blocked {
 		printResult(results[idBlocked], "Blocked", func(blocked string) {
 			printData("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
 		})
 	}
 
-	if flagCracked {
+	if cfg.cracked {
 		printResult(results[idCracked], "Cracked", func(crackedWhitelisted [2]bool) {
 			printData("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
 			if crackedWhitelisted[0] {
@@ -238,7 +235,7 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 		})
 	}
 
-	if flagRcon {
+	if cfg.rcon {
 		printResult(results[idRcon], "RCON", func(enabled bool) {
 			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		})
@@ -248,15 +245,15 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 func printPalette() {
 	const codes = "0123456789abcdef"
 	fmt.Print("\n")
-	if flagIcon {
-		fmt.Print(ansi.Fwd(flagIconSize + padding))
+	if !cfg.noIcon {
+		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
 	}
 	for i, code := range codes {
 		fmt.Print(ansi.Bg(mc.ParseColor(code)) + "   ")
 		if (i + 1) == (len(codes) / 2) {
 			fmt.Print(ansi.Reset + "\n")
-			if flagIcon {
-				fmt.Print(ansi.Fwd(flagIconSize + padding))
+			if !cfg.noIcon {
+				fmt.Print(ansi.Fwd(cfg.iconSize + padding))
 			}
 		}
 	}
