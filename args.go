@@ -18,6 +18,7 @@ var cfg = struct {
 	help      bool
 	proto     string
 	timeout   time.Duration
+	noStatus  bool
 	noIcon    bool
 	iconSize  uint
 	query     bool
@@ -49,9 +50,10 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 	flag.Var(&cfg.help, "help", 'h', cfg.help, "")
 	flag.Var(&cfg.proto, "proto", 'p', cfg.proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
+	flag.Var(&cfg.noStatus, "no-status", 0, cfg.noStatus, "Get server info using the Server List Ping interface.")
 	flag.Var(&cfg.noIcon, "no-icon", 0, cfg.noIcon, "Print the server icon.")
 	flag.Var(&cfg.iconSize, "icon-size", 0, cfg.iconSize, "Icon size in pixels.")
-	flag.Var(&cfg.query, "query", 'q', cfg.query, "Attempt to communicate using the query protocol.")
+	flag.Var(&cfg.query, "query", 'q', cfg.query, "Get server info using the query protocol.")
 	flag.Var(&cfg.queryPort, "query-port", 0, cfg.queryPort, "Port to use for the query protocol.")
 	flag.Var(&cfg.blocked, "blocked", 'b', cfg.blocked, "Check the host against Mojang's blocklist.")
 	flag.Var(&cfg.cracked, "cracked", 'c', cfg.cracked, "Attempt to login using an offline player.")
@@ -66,6 +68,10 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 
 	if cfg.help {
 		printHelp()
+	}
+
+	if cfg.noStatus {
+		cfg.noIcon = true
 	}
 
 	switch len(args) {

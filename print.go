@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	idQuery = iota
+	idStatus = iota
+	idQuery
 	idBlocked
 	idCracked
 	idRcon
@@ -56,23 +57,7 @@ func printTimeout(label string) {
 	printData(label, ansi.DarkYellow+"Timed out")
 }
 
-func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
-	var result result
-	select {
-	case result = <-ch:
-	case <-timeout:
-		log.Fatalln("The server took too long to respond.")
-	}
-
-	if result.err != nil {
-		log.Fatalln("Failed to get server status:", result.err)
-	}
-
-	status, ok := result.v.(mc.StatusResponse)
-	if !ok {
-		log.Panicln("Unexpected result value for status:", result.v)
-	}
-
+func printStatus(status *mc.StatusResponse, host string, port uint16) {
 	if !cfg.noIcon {
 		err := printIcon(&status.Icon)
 		if err != nil {
@@ -174,7 +159,7 @@ func printStatus(ch <-chan result, timeout <-chan time.Time, host string, port u
 }
 
 func printQuery(query *mc.QueryResponse) {
-	printData("Query", formatBool(query != nil, "Enabled", "Disabled"))
+	prev := lines
 	if query != nil {
 		if query.Software != "" {
 			printData("Software", query.Software)
@@ -183,6 +168,9 @@ func printQuery(query *mc.QueryResponse) {
 		if len(query.Plugins) > 0 {
 			printData("Plugins", strings.Join(query.Plugins, "\n"))
 		}
+	}
+	if lines == prev {
+		printData("Query", ansi.Green+"Enabled")
 	}
 }
 
@@ -201,10 +189,13 @@ func printResult[T any](result result, label string, fn func(T)) {
 	}
 }
 
-func printResults(ch <-chan result, timeout <-chan time.Time) {
-	var results [4]result
+func printResults(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
+	var results [5]result
 
-	n := boolInt(cfg.query) + boolInt(cfg.blocked) + boolInt(cfg.cracked) + boolInt(cfg.rcon)
+	n := boolInt(!cfg.noStatus) + boolInt(cfg.query) + boolInt(cfg.blocked) + boolInt(cfg.cracked) + boolInt(cfg.rcon)
+	if n == 0 {
+		log.Fatalln("Nothing to do!")
+	}
 	for ; n > 0; n-- {
 		select {
 		case result := <-ch:
@@ -212,6 +203,16 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 		case <-timeout:
 			n = 0
 		}
+	}
+
+	if !cfg.noStatus {
+		result := results[idStatus]
+		if result.err != nil {
+			cfg.noIcon = true
+		}
+		printResult(results[idStatus], "Status", func(status mc.StatusResponse) {
+			printStatus(&status, host, port)
+		})
 	}
 
 	if cfg.query {
@@ -239,6 +240,16 @@ func printResults(ch <-chan result, timeout <-chan time.Time) {
 		printResult(results[idRcon], "RCON", func(enabled bool) {
 			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		})
+	}
+
+	if !cfg.noPalette {
+		printPalette()
+	}
+
+	if !cfg.noIcon && lines < int(iconHeight())+1 {
+		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
+	} else {
+		fmt.Print("\n")
 	}
 }
 

@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"minefetch/internal/mc"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -18,32 +16,20 @@ func main() {
 		log.Fatalln("Failed to parse arguments:", err)
 	}
 
+	ch := make(chan result)
 	timeout := time.After(cfg.timeout)
-
-	chStatus := make(chan result)
-	go func() {
-		status, err := mc.Status(host, port, ver)
-		chStatus <- result{-1, status, err}
-	}()
-
-	chResults := make(chan result)
-	startResults(host, port, ver, chResults)
-
-	printStatus(chStatus, timeout, host, port)
-	printResults(chResults, timeout)
-
-	if !cfg.noPalette {
-		printPalette()
-	}
-
-	if !cfg.noIcon && lines < int(iconHeight())+1 {
-		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
-	} else {
-		fmt.Print("\n")
-	}
+	startResults(ch, host, port, ver)
+	printResults(ch, timeout, host, port)
 }
 
-func startResults(host string, port uint16, ver int32, ch chan<- result) {
+func startResults(ch chan<- result, host string, port uint16, ver int32) {
+	if !cfg.noStatus {
+		go func() {
+			status, err := mc.Status(host, port, ver)
+			ch <- result{idStatus, status, err}
+		}()
+	}
+
 	if cfg.query {
 		go func() {
 			queryPort := cfg.queryPort
