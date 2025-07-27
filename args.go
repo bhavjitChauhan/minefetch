@@ -13,22 +13,22 @@ import (
 )
 
 var cfg = struct {
-	argHost, argPort string
-	host             string
-	port             uint16
-	help             bool
-	proto            int32
-	timeout          time.Duration
-	noStatus         bool
-	noIcon           bool
-	iconSize         uint
-	query            bool
-	queryPort        uint
-	blocked          bool
-	cracked          bool
-	rcon             bool
-	rconPort         uint
-	noPalette        bool
+	host      string
+	port      uint16
+	help      bool
+	proto     int32
+	timeout   time.Duration
+	noStatus  bool
+	noIcon    bool
+	iconSize  uint
+	query     bool
+	queryPort uint
+	blocked   bool
+	cracked   bool
+	rcon      bool
+	rconPort  uint
+	noPalette bool
+	argHost   string
 }{
 	host:     "localhost",
 	port:     25565,
@@ -77,18 +77,19 @@ func parseArgs() (err error) {
 		cfg.noIcon = true
 	}
 
+	var argPort string
 	switch len(args) {
 	case 0:
 		cfg.argHost = cfg.host
 	case 1:
-		cfg.argHost, cfg.argPort, err = net.SplitHostPort(args[0])
+		cfg.argHost, argPort, err = net.SplitHostPort(args[0])
 		if err != nil {
 			err = nil
 			cfg.argHost = args[0]
 		}
 	case 2:
 		cfg.argHost = args[0]
-		cfg.argPort = args[1]
+		argPort = args[1]
 	default:
 		log.Print("Too many arguments.\n\n")
 		printHelp()
@@ -103,9 +104,9 @@ func parseArgs() (err error) {
 			port = addrs[0].Port
 		}
 	}
-	if cfg.argPort != "" {
+	if argPort != "" {
 		var i int
-		i, err = strconv.Atoi(cfg.argPort)
+		i, err = strconv.Atoi(argPort)
 		if err != nil {
 			return
 		}
