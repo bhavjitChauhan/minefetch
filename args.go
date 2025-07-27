@@ -12,24 +12,26 @@ import (
 	"time"
 )
 
-var argHost, argPort string
-
 var cfg = struct {
-	help      bool
-	proto     string
-	timeout   time.Duration
-	noStatus  bool
-	noIcon    bool
-	iconSize  uint
-	query     bool
-	queryPort uint
-	blocked   bool
-	cracked   bool
-	rcon      bool
-	rconPort  uint
-	noPalette bool
+	argHost, argPort string
+	host             string
+	port             uint16
+	help             bool
+	proto            int32
+	timeout          time.Duration
+	noStatus         bool
+	noIcon           bool
+	iconSize         uint
+	query            bool
+	queryPort        uint
+	blocked          bool
+	cracked          bool
+	rcon             bool
+	rconPort         uint
+	noPalette        bool
 }{
-	proto:    "1.21.8",
+	host:     "localhost",
+	port:     25565,
 	timeout:  time.Second,
 	iconSize: 32,
 	rconPort: 25575,
@@ -46,9 +48,10 @@ Flags:
 	os.Exit(0)
 }
 
-func parseArgs() (host string, port uint16, ver int32, err error) {
+func parseArgs() (err error) {
+	proto := "1.21.8"
 	flag.Var(&cfg.help, "help", 'h', cfg.help, "")
-	flag.Var(&cfg.proto, "proto", 'p', cfg.proto, "Protocol version to use for requests.")
+	flag.Var(&proto, "proto", 'p', proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
 	flag.Var(&cfg.noStatus, "no-status", 0, cfg.noStatus, "Get server info using the Server List Ping interface.")
 	flag.Var(&cfg.noIcon, "no-icon", 0, cfg.noIcon, "Print the server icon.")
@@ -76,24 +79,23 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 
 	switch len(args) {
 	case 0:
-		argHost = "localhost"
+		cfg.argHost = cfg.host
 	case 1:
-		argHost, argPort, err = net.SplitHostPort(args[0])
+		cfg.argHost, cfg.argPort, err = net.SplitHostPort(args[0])
 		if err != nil {
 			err = nil
-			argHost = args[0]
+			cfg.argHost = args[0]
 		}
 	case 2:
-		argHost = args[0]
-		argPort = args[1]
+		cfg.argHost = args[0]
+		cfg.argPort = args[1]
 	default:
 		log.Print("Too many arguments.\n\n")
 		printHelp()
 	}
 
-	host = argHost
-	ver = parseFlagProto()
-
+	host := cfg.argHost
+	var port uint16
 	if net.ParseIP(host) == nil {
 		_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 		if err == nil && len(addrs) > 0 {
@@ -101,27 +103,31 @@ func parseArgs() (host string, port uint16, ver int32, err error) {
 			port = addrs[0].Port
 		}
 	}
-	if argPort != "" {
+	if cfg.argPort != "" {
 		var i int
-		i, err = strconv.Atoi(argPort)
+		i, err = strconv.Atoi(cfg.argPort)
 		if err != nil {
 			return
 		}
 		port = uint16(i)
 	} else if port == 0 {
-		port = 25565
+		port = cfg.port
 	}
+	cfg.host = host
+	cfg.port = port
+
+	cfg.proto = parseFlagProto(proto)
 
 	return
 }
 
-func parseFlagProto() int32 {
-	v, ok := mc.VersionNameId[cfg.proto]
+func parseFlagProto(proto string) int32 {
+	v, ok := mc.VersionNameId[proto]
 	if ok {
 		return v
 	}
 
-	i, err := strconv.Atoi(cfg.proto)
+	i, err := strconv.Atoi(proto)
 	if err != nil {
 		log.Fatalln("Failed to parse protocol version:", cfg.proto)
 	}

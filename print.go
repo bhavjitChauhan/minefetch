@@ -10,7 +10,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -22,14 +21,17 @@ const (
 	idRcon
 )
 
+type results [5]result
+
 const padding = 2
 
 var lines = 0
 
 type result struct {
-	id  int
-	v   any
-	err error
+	id      int
+	v       any
+	err     error
+	timeout bool
 }
 
 func printData(label string, data any) {
@@ -57,6 +59,51 @@ func printTimeout(label string) {
 	printData(label, ansi.DarkYellow+"Timed out")
 }
 
+func printAddrInfo() {
+	ip := cfg.argHost
+	if net.ParseIP(cfg.argHost) == nil {
+		ips, err := net.LookupIP(cfg.host)
+		if err == nil {
+			ip = ips[0].String()
+		}
+	}
+	if cfg.argHost != ip {
+		printData("Host", cfg.argHost)
+	}
+	if cfg.host != cfg.argHost {
+		printData("SRV", cfg.host)
+	}
+	if ip != "" {
+		printData("IP", ip)
+	}
+	printData("Port", cfg.port)
+}
+
+func printMotd(motd mc.Text) {
+	ss := strings.Split(motd.Ansi(), "\n")
+	for i, s := range ss {
+		ss[i] = ansi.TrimSpace(s)
+	}
+	if len(ss) > 1 {
+		n := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
+		i := 0
+		if n[1] < n[0] {
+			i = 1
+		}
+		j := (i + 1) % 2
+		ss[i] = strings.Repeat(" ", (n[j]-n[i])/2) + ss[i]
+	}
+	printData("MOTD", strings.Join(ss, "\n"))
+}
+
+func printPlayers(online, max int, sample []string) {
+	s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", online, max)
+	for _, v := range sample {
+		s += "\n" + mc.LegacyTextAnsi(v)
+	}
+	printData("Players", s)
+}
+
 func printStatus(status *mc.StatusResponse, host string, port uint16) {
 	if !cfg.noIcon {
 		err := printIcon(&status.Icon)
@@ -66,22 +113,7 @@ func printStatus(status *mc.StatusResponse, host string, port uint16) {
 		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
 	}
 
-	{
-		ss := strings.Split(status.Motd.Ansi(), "\n")
-		for i, s := range ss {
-			ss[i] = ansi.TrimSpace(s)
-		}
-		if len(ss) > 1 {
-			n := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
-			i := 0
-			if n[1] < n[0] {
-				i = 1
-			}
-			j := (i + 1) % 2
-			ss[i] = strings.Repeat(" ", (n[j]-n[i])/2) + ss[i]
-		}
-		printData("MOTD", strings.Join(ss, "\n"))
-	}
+	printMotd(status.Motd)
 
 	{
 		ms := status.Latency.Milliseconds()
@@ -100,33 +132,12 @@ func printStatus(status *mc.StatusResponse, host string, port uint16) {
 	printData("Version", mc.LegacyTextAnsi(status.Version.Name))
 
 	{
-		s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", status.Players.Online, status.Players.Max)
-		for _, v := range status.Players.Sample {
-			s += "\n" + mc.LegacyTextAnsi(v.Name)
+		var sample []string
+		for _, p := range status.Players.Sample {
+			sample = append(sample, p.Name)
 		}
-		printData("Players", s)
+		printPlayers(status.Players.Online, status.Players.Max, sample)
 	}
-
-	{
-		ip := argHost
-		if net.ParseIP(argHost) == nil {
-			ips, err := net.LookupIP(host)
-			if err == nil {
-				ip = ips[0].String()
-			}
-		}
-		if argHost != ip {
-			printData("Host", argHost)
-		}
-		if host != argHost {
-			printData("SRV", host)
-		}
-		if ip != "" {
-			printData("IP", ip)
-		}
-	}
-
-	printData("Port", port)
 
 	{
 		var s string
@@ -160,6 +171,12 @@ func printStatus(status *mc.StatusResponse, host string, port uint16) {
 
 func printQuery(query *mc.QueryResponse) {
 	prev := lines
+	if cfg.noStatus {
+		printData("MOTD", mc.LegacyTextAnsi(query.Motd))
+		// TODO: ping
+		printData("Version", mc.LegacyTextAnsi(query.Version))
+		printPlayers(query.Players.Online, query.Players.Max, query.Players.Sample)
+	}
 	if query != nil {
 		if query.Software != "" {
 			printData("Software", query.Software)
@@ -184,42 +201,33 @@ func printResult[T any](result result, label string, fn func(T)) {
 			log.Panicf("Unexpected result value for %v: %v", label, result.v)
 		}
 		fn(v)
-	default:
+	case result.timeout:
 		printTimeout(label)
+	default:
+		log.Panicln("Unexpected result state:", result)
 	}
 }
 
-func printResults(ch <-chan result, timeout <-chan time.Time, host string, port uint16) {
-	var results [5]result
-
-	n := boolInt(!cfg.noStatus) + boolInt(cfg.query) + boolInt(cfg.blocked) + boolInt(cfg.cracked) + boolInt(cfg.rcon)
-	if n == 0 {
-		log.Fatalln("Nothing to do!")
-	}
-	for ; n > 0; n-- {
-		select {
-		case result := <-ch:
-			results[result.id] = result
-		case <-timeout:
-			n = 0
-		}
-	}
-
+func printResults(results results) {
 	if !cfg.noStatus {
 		result := results[idStatus]
-		if result.err != nil {
+		if result.err != nil || result.timeout {
+			cfg.noStatus = true
 			cfg.noIcon = true
 		}
 		printResult(results[idStatus], "Status", func(status mc.StatusResponse) {
-			printStatus(&status, host, port)
+			printStatus(&status, cfg.host, cfg.port)
 		})
 	}
 
 	if cfg.query {
-		printResult(results[idQuery], "Query", func(query mc.QueryResponse) {
+		result := results[idQuery]
+		printResult(result, "Query", func(query mc.QueryResponse) {
 			printQuery(&query)
 		})
 	}
+
+	printAddrInfo()
 
 	if cfg.blocked {
 		printResult(results[idBlocked], "Blocked", func(blocked string) {
