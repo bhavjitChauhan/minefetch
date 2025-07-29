@@ -6,6 +6,7 @@ import (
 	"minefetch/internal/ansi"
 	"minefetch/internal/emoji"
 	"strconv"
+	"strings"
 )
 
 // https://minecraft.wiki/w/Text_component_format#Java_Edition
@@ -22,35 +23,38 @@ type Text struct {
 }
 
 func (t Text) Raw() string {
-	s := t.Text
+	var b strings.Builder
+	b.WriteString(t.Text)
 	for _, t = range t.Extra {
-		s += t.Raw()
+		b.WriteString(t.Raw())
 	}
-	return s
+	return b.String()
 }
 
 func (t Text) Ansi() string {
-	s := ansi.Color(t.Color)
+	var b strings.Builder
+	b.WriteString(ansi.Color(t.Color))
 	if t.Bold {
-		s += ansi.Bold
+		b.WriteString(ansi.Bold)
 	}
 	if t.Italic {
-		s += ansi.Italic
+		b.WriteString(ansi.Italic)
 	}
 	if t.Underlined {
-		s += ansi.Underline
+		b.WriteString(ansi.Underline)
 	}
 	if t.Strikethrough {
-		s += ansi.Strike
+		b.WriteString(ansi.Strike)
 	}
 	if t.Obfuscated {
-		s += ansi.Invert
+		b.WriteString(ansi.Invert)
 	}
-	s += LegacyTextAnsi(emoji.ReplaceColored(t.Text))
+	b.WriteString(LegacyTextAnsi(emoji.ReplaceColored(t.Text)))
 	for _, t = range t.Extra {
-		s += t.Ansi()
+		b.WriteString(t.Ansi())
 	}
-	return s + ansi.Reset
+	b.WriteString(ansi.Reset)
+	return b.String()
 }
 
 func (t *Text) UnmarshalJSON(b []byte) error {
@@ -115,43 +119,43 @@ func normText(v any, parent Text) Text {
 }
 
 func LegacyTextAnsi(s string) string {
-	var f string
-
+	var b strings.Builder
 	esc := false
 	for _, v := range s {
 		if !esc {
 			if v == '§' {
 				esc = true
 			} else {
-				f += string(v)
+				b.WriteRune(v)
 			}
 			continue
 		} else {
 			esc = false
 		}
 
-		// https://minecraft.wiki/w/Formatting_codes#Java_Edition
-		if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-			f += ansi.Reset + ansi.Color(ParseColor(v))
-		} else {
-			switch v {
-			case 'k':
-				f += ansi.Invert
-			case 'l':
-				f += ansi.Bold
-			case 'm':
-				f += ansi.Strike
-			case 'n':
-				f += ansi.Underline
-			case 'o':
-				f += ansi.Italic
-			case 'r':
-				f += ansi.Reset
+		switch v {
+		case 'k':
+			b.WriteString(ansi.Invert)
+		case 'l':
+			b.WriteString(ansi.Bold)
+		case 'm':
+			b.WriteString(ansi.Strike)
+		case 'n':
+			b.WriteString(ansi.Underline)
+		case 'o':
+			b.WriteString(ansi.Italic)
+		case 'r':
+			b.WriteString(ansi.Reset)
+		default:
+			// https://minecraft.wiki/w/Formatting_codes#Java_Edition
+			if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
+				b.WriteString(ansi.Reset)
+				b.WriteString(ansi.Color(ParseColor(v)))
 			}
 		}
 	}
-
-	return f + ansi.Reset
+	b.WriteString(ansi.Reset)
+	return b.String()
 }
 
 var (

@@ -5,12 +5,13 @@ import (
 	"image"
 	"image/color"
 	"minefetch/internal/ansi"
+	"strings"
 )
 
 // The full block character (█) is not used in favor of setting the background
 // color of a space character because some terminals (e.g. xterm out of the box)
 // render block characters weird.
-var blocks = [...]string{" ", "░", "▒", "▓", " "}
+var blocks = [...]rune{' ', '░', '▒', '▓', ' '}
 
 // Prints an image using Unicode shaded block characters (▓, ▒, ░) and ANSI
 // 24-bit foreground and background color escape codes.
@@ -26,35 +27,39 @@ var blocks = [...]string{" ", "░", "▒", "▓", " "}
 // background color, shaded block characters and a space character with a
 // colored background.
 func BlockPrint(img image.Image, square bool) {
-	b := img.Bounds()
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
+	var b strings.Builder
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
 			// https://pkg.go.dev/image/png#example-Decode
 			level := c.A / 51 // 51 * 5 = 255
 			if level == 5 {
 				level--
 			}
-			var s string
 			switch {
 			case level == 0:
-				s = ansi.ResetBg + " "
+				b.WriteString(ansi.ResetBg)
+				b.WriteRune(' ')
 			case level < uint8(len(blocks))-1:
-				s = ansi.Color(c) + blocks[level]
+				b.WriteString(ansi.Color(c))
+				b.WriteRune(blocks[level])
 			default:
-				s = ansi.Bg(c) + " "
+				b.WriteString(ansi.Bg(c))
+				b.WriteRune(' ')
 			}
 			if square {
-				s += blocks[level]
+				b.WriteRune(blocks[level])
 			}
-			fmt.Print(s)
 		}
 		// It's blockPrint, not blockPrintln
-		if y != b.Max.Y-1 {
-			fmt.Print(ansi.ResetBg + "\n")
+		if y != bounds.Max.Y-1 {
+			b.WriteString(ansi.ResetBg)
+			b.WriteRune('\n')
 		}
 	}
-	fmt.Print(ansi.Reset)
+	b.WriteString(ansi.Reset)
+	fmt.Print(b.String())
 }
 
 // Prints an iamge using a combination of Unicde upper and lower half block
@@ -75,26 +80,36 @@ func BlockPrint(img image.Image, square bool) {
 // [catimg]: https://github.com/posva/catimg
 // [pixterm]: https://github.com/eliukblau/pixterm
 func HalfPrint(img image.Image, thresh uint8) {
-	b := img.Bounds()
-	for y := b.Min.Y; y < b.Max.Y; y += 2 {
-		for x := b.Min.X; x < b.Max.X; x++ {
+	var b strings.Builder
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y += 2 {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c0 := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
 			c1 := color.NRGBAModel.Convert(img.At(x, y+1)).(color.NRGBA)
 			// Background color is only used if both pixels satisfy the alpha
 			// threshold
 			if c0.A >= thresh && c1.A >= thresh {
-				fmt.Print(ansi.Bg(c0) + ansi.Color(c1) + "▄")
+				b.WriteString(ansi.Bg(c0))
+				b.WriteString(ansi.Color(c1))
+				b.WriteRune('▄')
 			} else if c0.A >= thresh {
-				fmt.Print(ansi.ResetBg + ansi.Color(c0) + "▀")
+				b.WriteString(ansi.ResetBg)
+				b.WriteString(ansi.Color(c0))
+				b.WriteRune('▀')
 			} else if c1.A >= thresh {
-				fmt.Print(ansi.ResetBg + ansi.Color(c1) + "▄")
+				b.WriteString(ansi.ResetBg)
+				b.WriteString(ansi.Color(c1))
+				b.WriteRune('▄')
 			} else {
-				fmt.Print(ansi.ResetBg + " ")
+				b.WriteString(ansi.ResetBg)
+				b.WriteRune(' ')
 			}
 		}
-		if y+2 < b.Max.Y {
-			fmt.Print(ansi.Reset + "\n")
+		if y+2 < bounds.Max.Y {
+			b.WriteString(ansi.ResetBg)
+			b.WriteRune('\n')
 		}
 	}
-	fmt.Print(ansi.Reset)
+	b.WriteString(ansi.Reset)
+	fmt.Print(b.String())
 }
