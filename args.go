@@ -13,28 +13,36 @@ import (
 )
 
 var cfg = struct {
-	host      string
-	port      uint16
-	help      bool
-	proto     int32
-	timeout   time.Duration
-	noStatus  bool
-	noIcon    bool
-	iconSize  uint
-	query     bool
-	queryPort uint
-	blocked   bool
-	cracked   bool
-	rcon      bool
-	rconPort  uint
-	noPalette bool
-	argHost   string
+	host        string
+	port        uint16
+	help        bool
+	proto       int32
+	timeout     time.Duration
+	status      bool
+	icon        bool
+	iconSize    uint
+	bedrock     bool
+	bedrockPort uint16
+	crossplay   bool
+	query       bool
+	queryPort   uint
+	blocked     bool
+	cracked     bool
+	rcon        bool
+	rconPort    uint
+	palette     bool
+	argHost     string
 }{
-	host:     "localhost",
-	port:     25565,
-	timeout:  time.Second,
-	iconSize: 32,
-	rconPort: 25575,
+	host:        "localhost",
+	port:        25565,
+	status:      true,
+	icon:        true,
+	bedrockPort: 19132,
+	crossplay:   true,
+	timeout:     time.Second,
+	iconSize:    32,
+	rconPort:    25575,
+	palette:     true,
 }
 
 func printHelp() {
@@ -53,16 +61,19 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.help, "help", 'h', cfg.help, "")
 	flag.Var(&proto, "proto", 'p', proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
-	flag.Var(&cfg.noStatus, "no-status", 0, cfg.noStatus, "Get server info using the Server List Ping interface.")
-	flag.Var(&cfg.noIcon, "no-icon", 0, cfg.noIcon, "Print the server icon.")
+	flag.Var(&cfg.status, "no-status", 0, cfg.status, "Don't get server info using the Server List Ping interface.")
+	flag.Var(&cfg.icon, "no-icon", 0, cfg.icon, "Don't print the server icon.")
 	flag.Var(&cfg.iconSize, "icon-size", 0, cfg.iconSize, "Icon size in pixels.")
+	flag.Var(&cfg.bedrock, "bedrock", 'b', cfg.bedrock, "Get Bedrock server info.")
+	flag.Var(&cfg.bedrockPort, "bedrock-port", 0, cfg.bedrockPort, "Bedrock server port.")
+	flag.Var(&cfg.crossplay, "no-crossplay", 0, cfg.crossplay, "Don't check if a Bedrock server is running on the same host.")
 	flag.Var(&cfg.query, "query", 'q', cfg.query, "Get server info using the query protocol.")
-	flag.Var(&cfg.queryPort, "query-port", 0, cfg.queryPort, "Port to use for the query protocol.")
-	flag.Var(&cfg.blocked, "blocked", 'b', cfg.blocked, "Check the host against Mojang's blocklist.")
+	flag.Var(&cfg.queryPort, "query-port", 0, "port", "Query protocol port.")
+	flag.Var(&cfg.blocked, "blocked", 0, cfg.blocked, "Check the host against Mojang's blocklist.")
 	flag.Var(&cfg.cracked, "cracked", 'c', cfg.cracked, "Attempt to login using an offline player.")
 	flag.Var(&cfg.rcon, "rcon", 'r', cfg.rcon, "Check if the RCON protocol is enabled.")
-	flag.Var(&cfg.rconPort, "rcon-port", 0, cfg.rconPort, "Port to use for the RCON protocol.")
-	flag.Var(&cfg.noPalette, "no-palette", 0, cfg.noPalette, "Print Minecraft's formatting code colors")
+	flag.Var(&cfg.rconPort, "rcon-port", 0, cfg.rconPort, "RCON protocol port.")
+	flag.Var(&cfg.palette, "no-palette", 0, cfg.palette, "Print Minecraft's formatting code colors.")
 
 	args, err := flag.Parse()
 	if err != nil {
@@ -73,8 +84,9 @@ func parseArgs() (err error) {
 		printHelp()
 	}
 
-	if cfg.noStatus {
-		cfg.noIcon = true
+	if cfg.bedrock {
+		cfg.status = false
+		cfg.crossplay = false
 	}
 
 	var argPort string
@@ -95,27 +107,29 @@ func parseArgs() (err error) {
 		printHelp()
 	}
 
-	host := cfg.argHost
+	cfg.host = cfg.argHost
 	var port uint16
-	if net.ParseIP(host) == nil {
-		_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
+	if !cfg.bedrock && net.ParseIP(cfg.host) == nil {
+		_, addrs, err := net.LookupSRV("minecraft", "tcp", cfg.host)
 		if err == nil && len(addrs) > 0 {
-			host = strings.TrimSuffix(addrs[0].Target, ".")
+			cfg.host = strings.TrimSuffix(addrs[0].Target, ".")
 			port = addrs[0].Port
 		}
 	}
 	if argPort != "" {
-		var i int
-		i, err = strconv.Atoi(argPort)
+		var int int
+		int, err = strconv.Atoi(argPort)
 		if err != nil {
 			return
 		}
-		port = uint16(i)
-	} else if port == 0 {
-		port = cfg.port
+		port = uint16(int)
 	}
-	cfg.host = host
-	cfg.port = port
+	if port != 0 {
+		cfg.port = port
+		if cfg.bedrock {
+			cfg.bedrockPort = port
+		}
+	}
 
 	cfg.proto = parseFlagProto(proto)
 

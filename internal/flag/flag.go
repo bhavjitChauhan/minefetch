@@ -1,7 +1,17 @@
-// Like [spf13/pflag], but doesn't follow Go's flag and doesn't strictly adhere
-// to any standard.
-//
-// [sp13/spf13]: https://github.com/spf13/pflag
+/*
+Package flag is like [spf13/pflag], but doesn't follow Go's flag and doesn't
+strictly adhere to any standard.
+
+There are no "boolean" flags, only toggles. If a toggle flag is present, the
+boolean value will be set to the opposite of the default, if present, or true.
+
+*Flag runes* are single-character flags.
+
+*Flag strings* consist of multiple flag runes. Flag strings may only contain
+toggle flags.
+
+[sp13/pflag]: https://github.com/spf13/pflag
+*/
 package flag
 
 import (
@@ -73,7 +83,7 @@ func Parse() (remaining []string, err error) {
 			for _, r := range arg[1:] {
 				f, ok := flagRuneMap[r]
 				if !ok {
-					err = errors.New("unknown boolean flag rune name: " + string(r))
+					err = errors.New("unknown boolean flag rune: " + string(r))
 					return
 				}
 				p, ok := f.Value.(*bool)
@@ -81,7 +91,8 @@ func Parse() (remaining []string, err error) {
 					err = fmt.Errorf("unexpected non-boolean flag type: %T", f.Value)
 					return
 				}
-				*p = true
+				v, _ := f.DefValue.(bool)
+				*p = !v
 			}
 			continue
 		case isFlagRune(arg):
@@ -89,7 +100,7 @@ func Parse() (remaining []string, err error) {
 			var ok bool
 			f, ok = flagRuneMap[r]
 			if !ok {
-				err = errors.New("unknown flag rune name: " + string(r))
+				err = errors.New("unknown flag rune: " + string(r))
 				return
 			}
 		default:
@@ -99,7 +110,8 @@ func Parse() (remaining []string, err error) {
 
 		switch p := f.Value.(type) {
 		case *bool:
-			*p = true
+			v, _ := f.DefValue.(bool)
+			*p = !v
 			continue
 		case *uint:
 			var uint64 uint64

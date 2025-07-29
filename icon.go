@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
+	"image"
 	"image/png"
+	"log"
+	"minefetch/internal/ansi"
 	"minefetch/internal/image/print"
 	"minefetch/internal/image/scale"
-	"minefetch/internal/mc"
 )
 
 const iconAspectRatio = 0.5
@@ -18,14 +21,13 @@ func iconHeight() uint {
 	return uint(float64(cfg.iconSize) * iconAspectRatio)
 }
 
-func printIcon(icon *mc.Icon) error {
-	img := icon.Image
-	var err error
+func printIcon(img image.Image) {
 	if img == nil {
+		var err error
 		img, err = png.Decode(bytes.NewReader(defaultIcon))
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			log.Fatalln("Failed to print icon:", err)
+		}
 	}
 
 	f := float64(cfg.iconSize) / float64(img.Bounds().Dy())
@@ -33,6 +35,5 @@ func printIcon(icon *mc.Icon) error {
 		img = scale.Lanczos(img, f)
 	}
 	print.HalfPrint(img, 255/2)
-
-	return nil
+	fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
 }

@@ -7,21 +7,24 @@ import (
 	"minefetch/internal/ansi"
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
+	"minefetch/internal/mcpe"
 	"net"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 )
 
+// TODO: better names
 const (
 	idStatus = iota
+	idBedrockStatus
 	idQuery
 	idBlocked
 	idCracked
 	idRcon
 )
 
-type results [5]result
+type results [6]result
 
 const padding = 2
 
@@ -36,13 +39,13 @@ type result struct {
 
 func printData(label string, data any) {
 	s := strings.Split(fmt.Sprint(data), "\n")
-	if !cfg.noIcon {
+	if cfg.icon {
 		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
 	}
 	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + s[0])
 	for _, v := range s[1:] {
 		fwd := uint(len(label)) + 2
-		if !cfg.noIcon {
+		if cfg.icon {
 			fwd += cfg.iconSize + padding
 		}
 		fmt.Println(ansi.Fwd(fwd) + v)
@@ -59,7 +62,7 @@ func printTimeout(label string) {
 	printData(label, ansi.DarkYellow+"Timed out")
 }
 
-func printAddrInfo() {
+func printNetInfo() {
 	ip := cfg.argHost
 	if net.ParseIP(cfg.argHost) == nil {
 		ips, err := net.LookupIP(cfg.host)
@@ -76,11 +79,18 @@ func printAddrInfo() {
 	if ip != "" {
 		printData("IP", ip)
 	}
-	printData("Port", cfg.port)
+	port := cfg.port
+	if cfg.bedrock {
+		port = cfg.bedrockPort
+	}
+	printData("Port", port)
+	if cfg.crossplay {
+		printData("Bedrock port", cfg.bedrockPort)
+	}
 }
 
-func printMotd(motd mc.Text) {
-	ss := strings.Split(motd.Ansi(), "\n")
+func printMotd(s string) {
+	ss := strings.Split(s, "\n")
 	for i, s := range ss {
 		ss[i] = ansi.TrimSpace(s)
 	}
@@ -104,16 +114,12 @@ func printPlayers(online, max int, sample []string) {
 	printData("Players", s)
 }
 
-func printStatus(status *mc.StatusResponse, host string, port uint16) {
-	if !cfg.noIcon {
-		err := printIcon(&status.Icon)
-		if err != nil {
-			log.Fatalln("Failed to print icon:", err)
-		}
-		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
+func printStatus(status *mc.StatusResponse) {
+	if cfg.icon {
+		printIcon(status.Icon)
 	}
 
-	printMotd(status.Motd)
+	printMotd(status.Motd.Ansi())
 
 	{
 		ms := status.Latency.Milliseconds()
@@ -169,22 +175,28 @@ func printStatus(status *mc.StatusResponse, host string, port uint16) {
 	}
 }
 
-func printQuery(query *mc.QueryResponse) {
+func printBedrock(status mcpe.StatusResponse) {
+	printData("Name", mcpe.LegacyTextAnsi(status.Name))
+	printData("Level", mcpe.LegacyTextAnsi(status.Level))
+	printData("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
+	printPlayers(status.Players.Online, status.Players.Max, nil)
+	printData("Edition", status.Edition)
+	printData("Gamemode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Gamemode.Name, status.Gamemode.ID))
+}
+
+func printQuery(query mc.QueryResponse) {
 	prev := lines
-	if cfg.noStatus {
-		printData("MOTD", mc.LegacyTextAnsi(query.Motd))
+	if !cfg.status {
+		printMotd(mc.LegacyTextAnsi(query.Motd))
 		// TODO: ping
 		printData("Version", mc.LegacyTextAnsi(query.Version))
 		printPlayers(query.Players.Online, query.Players.Max, query.Players.Sample)
 	}
-	if query != nil {
-		if query.Software != "" {
-			printData("Software", query.Software)
-		}
-
-		if len(query.Plugins) > 0 {
-			printData("Plugins", strings.Join(query.Plugins, "\n"))
-		}
+	if query.Software != "" {
+		printData("Software", query.Software)
+	}
+	if len(query.Plugins) > 0 {
+		printData("Plugins", strings.Join(query.Plugins, "\n"))
 	}
 	if lines == prev {
 		printData("Query", ansi.Green+"Enabled")
@@ -209,25 +221,40 @@ func printResult[T any](result result, label string, fn func(T)) {
 }
 
 func printResults(results results) {
-	if !cfg.noStatus {
+	if cfg.icon && (!cfg.status || results[idStatus].err != nil || results[idStatus].timeout) {
+		printIcon(nil)
+	}
+
+	if cfg.status {
 		result := results[idStatus]
 		if result.err != nil || result.timeout {
-			cfg.noStatus = true
-			cfg.noIcon = true
+			cfg.status = false
 		}
 		printResult(results[idStatus], "Status", func(status mc.StatusResponse) {
-			printStatus(&status, cfg.host, cfg.port)
+			printStatus(&status)
+		})
+	}
+
+	if cfg.bedrock {
+		printResult(results[idBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
+			printBedrock(status)
 		})
 	}
 
 	if cfg.query {
 		result := results[idQuery]
 		printResult(result, "Query", func(query mc.QueryResponse) {
-			printQuery(&query)
+			printQuery(query)
 		})
 	}
 
-	printAddrInfo()
+	if cfg.crossplay {
+		printResult(results[idBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
+			printData("Crossplay", ansi.Green+"Yes")
+		})
+	}
+
+	printNetInfo()
 
 	if cfg.blocked {
 		printResult(results[idBlocked], "Blocked", func(blocked string) {
@@ -250,11 +277,11 @@ func printResults(results results) {
 		})
 	}
 
-	if !cfg.noPalette {
+	if cfg.palette {
 		printPalette()
 	}
 
-	if !cfg.noIcon && lines < int(iconHeight())+1 {
+	if cfg.icon && lines < int(iconHeight())+1 {
 		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
 	} else {
 		fmt.Print("\n")
@@ -263,21 +290,41 @@ func printResults(results results) {
 
 func printPalette() {
 	const codes = "0123456789abcdef"
-	fmt.Print("\n")
-	if !cfg.noIcon {
-		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
+	var b strings.Builder
+	b.WriteRune('\n')
+	if cfg.icon {
+		b.WriteString(ansi.Fwd(cfg.iconSize + padding))
 	}
-	for i, code := range codes {
-		fmt.Print(ansi.Bg(mc.ParseColor(code)) + "   ")
-		if (i + 1) == (len(codes) / 2) {
-			fmt.Print(ansi.Reset + "\n")
-			if !cfg.noIcon {
-				fmt.Print(ansi.Fwd(cfg.iconSize + padding))
-			}
-		}
+	for _, code := range codes[:len(codes)/2] {
+		b.WriteString(ansi.Bg(mc.ParseColor(code)))
+		b.WriteString("   ")
 	}
-	fmt.Println(ansi.Reset)
+	b.WriteString(ansi.Reset)
+	b.WriteRune('\n')
+	if cfg.icon {
+		b.WriteString(ansi.Fwd(cfg.iconSize + padding))
+	}
+	for _, code := range codes[len(codes)/2:] {
+		b.WriteString(ansi.Bg(mc.ParseColor(code)))
+		b.WriteString("   ")
+	}
 	lines += 3
+	if cfg.bedrock {
+		const codes = "ghijmnpqstuv"
+		b.WriteString(ansi.Reset)
+		b.WriteRune('\n')
+		if cfg.icon {
+			b.WriteString(ansi.Fwd(cfg.iconSize + padding))
+		}
+		for _, code := range codes {
+			b.WriteString(ansi.Bg(mcpe.ParseColor(code)))
+			b.WriteString("  ")
+		}
+		lines++
+	}
+	b.WriteString(ansi.Reset)
+	b.WriteRune('\n')
+	fmt.Print(b.String())
 }
 
 func formatBool(bool bool, t, f string) string {
@@ -304,11 +351,4 @@ func formatColorType(t pngconfig.ColorType) string {
 		return "RGBA"
 	}
 	return "unknown"
-}
-
-func boolInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"minefetch/internal/mc"
+	"minefetch/internal/mcpe"
 	"net"
 	"strconv"
 	"time"
@@ -24,10 +25,18 @@ func main() {
 }
 
 func startResults(ch chan<- result) {
-	if !cfg.noStatus {
+	if cfg.status {
 		go func() {
 			status, err := mc.Status(cfg.host, cfg.port, cfg.proto)
 			ch <- result{idStatus, status, err, false}
+		}()
+	}
+
+	if cfg.bedrock || cfg.crossplay {
+		go func() {
+			address := net.JoinHostPort(cfg.argHost, strconv.Itoa(int(cfg.bedrockPort)))
+			status, err := mcpe.Status(address)
+			ch <- result{idBedrockStatus, status, err, false}
 		}()
 	}
 
@@ -69,7 +78,7 @@ func startResults(ch chan<- result) {
 
 func collectResults(ch <-chan result, timeout <-chan time.Time) results {
 	var results results
-	n := boolInt(!cfg.noStatus) + boolInt(cfg.query) + boolInt(cfg.blocked) + boolInt(cfg.cracked) + boolInt(cfg.rcon)
+	n := countBools(cfg.status, cfg.bedrock, cfg.crossplay, cfg.query, cfg.blocked, cfg.cracked, cfg.rcon)
 	if n == 0 {
 		log.Fatalln("Nothing to do!")
 	}
@@ -82,9 +91,19 @@ func collectResults(ch <-chan result, timeout <-chan time.Time) results {
 		}
 	}
 	for i, r := range results {
-		if r.err == nil && r.v == nil {
+		if r.v == nil && r.err == nil {
 			results[i].timeout = true
 		}
 	}
 	return results
+}
+
+func countBools(bools ...bool) int {
+	n := 0
+	for _, b := range bools {
+		if b {
+			n++
+		}
+	}
+	return n
 }
