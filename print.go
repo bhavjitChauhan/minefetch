@@ -116,7 +116,7 @@ func printPlayers(online, max int, sample []string) {
 
 func printStatus(status *mc.StatusResponse) {
 	if cfg.icon {
-		printIcon(status.Icon)
+		printIcon(status.Icon.Image)
 	}
 
 	printMotd(status.Motd.Ansi())
