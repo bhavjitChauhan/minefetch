@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
 	"strconv"
@@ -81,6 +82,10 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	b := make([]byte, n)
 	_, err = br.Read(b)
 	if err != nil {
+		return
+	}
+	if len(b) == 0 {
+		err = errors.New("zero-length response")
 		return
 	}
 
