@@ -6,6 +6,7 @@ import (
 	"math"
 )
 
+// NearestNeighbor scales the image src to have width w and height h using nearest-neighbor interpolation.
 func NearestNeighbor(src image.Image, w, h uint) image.Image {
 	b := src.Bounds()
 	fx := float64(w) / float64(b.Dx())

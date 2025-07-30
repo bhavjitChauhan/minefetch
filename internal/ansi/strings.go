@@ -7,34 +7,36 @@ import (
 	"unicode/utf8"
 )
 
+// RemoveCsi returns s without [Control Sequence Introducer commands].
+//
+// [Control Sequence Introducer commands]: https://en.wikipedia.org/wiki/ANSI_escape_code#CSIsection
 func RemoveCsi(s string) string {
 	re := regexp.MustCompile(`\033\[\d+(?:;\d+)*[a-zA-Z]`)
 	return re.ReplaceAllString(s, "")
 }
 
-// Like strings.TrimSpace, but ignores [Control Sequence Introducer commands].
+// TrimSpace is like strings.TrimSpace, but ignores [Control Sequence Introducer commands].
 //
-// Trailing commands are also trimmed, so this function may result in undesired
-// behavior for strings utilizing, e.g., the background color.
+// Any and all commands before the first non-white-space character will be kept.
+// No commands following the last non-white-space character are kept.
+// Commands that have an effect on white space (e.g. Bg, Strike) are not handled as special cases.
 //
 // [Control Sequence Introducer commands]: https://en.wikipedia.org/wiki/ANSI_escape_code#CSIsection
 func TrimSpace(s string) string {
+	var b strings.Builder
 	start := -1
 	stop := 0
 	esc := false
 	csi := false
-	var b strings.Builder
 	for i, r := range s {
 		switch {
 		case csi:
-			break
+			// break
 		case esc:
 			esc = false
 			csi = r == '['
 		case r == 033:
 			esc = true
-		// TODO: don't trim newlines?
-		// TODO: don't trim struck spaces
 		case unicode.IsSpace(r):
 			continue
 		}
@@ -64,7 +66,8 @@ func TrimSpace(s string) string {
 	for utf8.RuneCountInString(s[stop:stop+i]) > 1 {
 		i--
 	}
-	b.WriteString(s[start:stop+i] + Reset)
+	b.WriteString(s[start : stop+i])
+	b.WriteString(Reset)
 
 	return b.String()
 }

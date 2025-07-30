@@ -6,12 +6,13 @@ import (
 	"math"
 )
 
-// Scales an image by a factor of f using [Lanczos resampling]. The theoretical
-// best downscaling method is sinc interpolation. Lanczos resampling uses a
-// windowed sinc function as its kernel kernel.
+// Lanczos scales the image src by a factor of f using three-lobed [Lanczos resampling].
+// This function is hard-coded to produce the best results for downscaling, i.e. f < 1.
+// Upscaling will likely produce undesired artifacts.
 //
-// This function is hard-coded to produce the best results for downscaling, i.e.
-// f < 1. Upscaling will likely produce undesired artifacts.
+// Sinc interpolation is viewed as theoretically the best method to scale images.
+// However, the sinc function is unbounded and doesn't drop off.
+// Lanczos resampling uses a windowed sinc function as its kernel.
 //
 // See [Jeff Boody's explainer] for a great resource on Lanczos resampling.
 //
@@ -19,12 +20,10 @@ import (
 // [Jeff Boody's explainer]: https://github.com/jeffboody/Lanczos
 func Lanczos(src image.Image, f float64) image.Image {
 	const a = 3
-
 	sb := src.Bounds()
 	dst := image.NewNRGBA(image.Rect(0, 0, int(math.Round(float64(sb.Dx())*f)), int(math.Round(float64(sb.Dy())*f))))
 	db := dst.Bounds()
 	fa := math.Round(a / f)
-
 	for y := range db.Dy() {
 		for x := range db.Dx() {
 			var acc struct {
@@ -53,7 +52,6 @@ func Lanczos(src image.Image, f float64) image.Image {
 			dst.Set(x, y, color.NRGBA{uint8(acc.r), uint8(acc.g), uint8(acc.b), uint8(acc.a)})
 		}
 	}
-
 	return dst
 }
 

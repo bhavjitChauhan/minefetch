@@ -1,7 +1,10 @@
-// [ANSI escape sequences] provide a way to control various aspects of
-// terminals.
-//
-// [ANSI escape sequences]: https://en.wikipedia.org/wiki/ANSI_escape_code
+/*
+Package ansi provides utilities to control various aspects of terminals using [ANSI escape codes].
+
+Virtually ever modern terminal emulator supports these sequences.
+
+[ANSI escape sequences]: https://en.wikipedia.org/wiki/ANSI_escape_code
+*/
 package ansi
 
 import "strconv"

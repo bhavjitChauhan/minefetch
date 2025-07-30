@@ -1,3 +1,6 @@
+/*
+Package emoji provides utilities for working with Unicode 16.0 emoji characters.
+*/
 package emoji
 
 import (
@@ -11,7 +14,12 @@ const (
 	colored rune = 0xFE0F
 )
 
-// https://unicode.org/Public/UNIDATA/emoji/emoji-data.txt
+// Emoji is the set of Unicode characters with the emoji property true.
+// The hash sign, asterisk and digits 0-9 are omitted from this table.
+//
+// See [Emoji Data].
+//
+// [Emoji Data]: https://unicode.org/Public/UNIDATA/emoji/emoji-data.txt
 var Emoji = &unicode.RangeTable{
 	R16: []unicode.Range16{
 		// {0x0023, 0x0023, 1},
@@ -430,11 +438,14 @@ var Emoji = &unicode.RangeTable{
 	},
 }
 
+// IsEmoji reports whether the rune r is in the Emoji table.
 func IsEmoji(r rune) bool {
 	return unicode.Is(Emoji, r)
 }
 
-// Replaces colored emoji variants with their monochrome counterparts.
+// ReplaceColored returns a copy of the string s with monochrome emoji.
+//
+// The mono variation sequence is inserted following all emoji characters.
 func ReplaceColored(s string) string {
 	b := strings.Builder{}
 	runes := []rune(s)

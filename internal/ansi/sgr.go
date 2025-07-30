@@ -5,10 +5,13 @@ import (
 	"strconv"
 )
 
-// Color names may not match the standard (they don't match Wikipedia) in favor
-// of making sense and save characters. For exmaple, "bright black" is just gray
-// and the "bright" variants are default as they are more commonly used. This
-// coincidentally also more closely matches Minecraft's naming scheme.
+// [Select Graphic Rendition parameters] control foreground and background style and color.
+//
+// Color names may not match the standard (they don't match Wikipedia) in favor of being more accurate and save characters.
+// For example, "bright black" is just gray and the "bright" variants are default as they are more commonly used.
+// This coincidentally also more closely matches Minecraft's naming scheme.
+//
+// [Select Graphic Rendition parameters]: https://en.wikipedia.org/wiki/ANSI_escape_code#Select_Graphic_Rendition_parameters
 const (
 	Reset     = "\033[0m"
 	Bold      = "\033[1m"
@@ -37,11 +40,13 @@ const (
 	White   = "\033[97m"
 )
 
+// Color returns the sequence to set the foreground color to c.
 func Color(c color.Color) string {
 	n := color.NRGBAModel.Convert(c).(color.NRGBA)
 	return "\033[38;2;" + strconv.Itoa(int(n.R)) + ";" + strconv.Itoa(int(n.G)) + ";" + strconv.Itoa(int(n.B)) + "m"
 }
 
+// Bg returns the sequence to set the background color to c.
 func Bg(c color.Color) string {
 	n := color.NRGBAModel.Convert(c).(color.NRGBA)
 	return "\033[48;2;" + strconv.Itoa(int(n.R)) + ";" + strconv.Itoa(int(n.G)) + ";" + strconv.Itoa(int(n.B)) + "m"

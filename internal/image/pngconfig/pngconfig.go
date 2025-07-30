@@ -1,4 +1,4 @@
-// Like image.Config, but provides more information specific to the PNG format.
+// Package pngconfig implements PNG image header decoding.
 package pngconfig
 
 import (
@@ -11,7 +11,7 @@ import (
 
 type BitDepth byte
 
-// https://www.w3.org/TR/png/#11IHDR
+// The PNG format allows the following bit depths.
 const (
 	BitDepth1  BitDepth = 1
 	BitDepth2  BitDepth = 2
@@ -22,6 +22,8 @@ const (
 
 type ColorType byte
 
+// The sums corresponding to the fives types of PNG image.
+//
 // https://www.w3.org/TR/png/#3colourType
 const (
 	ColorTypeGray    ColorType = 0
@@ -31,6 +33,8 @@ const (
 	ColorTypeRGBA    ColorType = 6
 )
 
+// Config holds data found in the PNG image header chunk.
+//
 // https://www.w3.org/TR/png/#11IHDR
 type Config struct {
 	Width, Height       uint32
@@ -40,6 +44,7 @@ type Config struct {
 	Interlaced          bool
 }
 
+// DecodeConfig is like png.DecodeConfig, but provides more information specific to the PNG format.
 func DecodeConfig(r io.Reader) (Config, error) {
 	var c Config
 

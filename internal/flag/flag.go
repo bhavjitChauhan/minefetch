@@ -1,16 +1,16 @@
 /*
-Package flag is like [spf13/pflag], but doesn't follow Go's flag and doesn't
-strictly adhere to any standard.
+Package flag implements POSIX/GNU-like command-line flag parsing.
+However, the package does not strictly adhere to any standard.
 
-There are no "boolean" flags, only toggles. If a toggle flag is present, the
-boolean value will be set to the opposite of the default, if present, or true.
+"Toggle flags" handle boolean variables.
+If a toggle flag is present, the boolean value will be set to the opposite of the default.
+If a default value is not provided, the flag will be set to true.
+Toggle flags cannot be assigned a value.
 
 *Flag runes* are single-character flags.
 
-*Flag strings* consist of multiple flag runes. Flag strings may only contain
-toggle flags.
-
-[sp13/pflag]: https://github.com/spf13/pflag
+*Flag strings* consist of multiple flag runes.
+Flag strings may only contain toggle flags.
 */
 package flag
 
@@ -44,6 +44,7 @@ func Var(p any, name string, r rune, v any, usage string) {
 	})
 }
 
+// Parse parses the command-line flags from os.Args[1:].
 func Parse() (remaining []string, err error) {
 	flagNameMap := make(map[string]Flag)
 	flagRuneMap := make(map[rune]Flag)
@@ -143,9 +144,7 @@ func Parse() (remaining []string, err error) {
 	return
 }
 
-// Inspired by [spf13/pflag].
-//
-// [pflag]: https://github.com/spf13/pflag/blob/c78f730fb023e4012c4097b24408867cd5c5bdde/flag.go#L697
+// Print prints flag usage for use in help commands.
 func Print() {
 	lines := make([]string, 0, len(Flags))
 	max := 0
@@ -167,6 +166,7 @@ func Print() {
 		default:
 			s = fmt.Sprintf("%s %T", f.Name, f.DefValue)
 		}
+		// Use of sentry character inspired by spf13/pflag
 		b.WriteString(fmt.Sprintf("--%s\x00%s", s, f.Usage))
 		if !isBool {
 			b.WriteString(fmt.Sprintf(" (default %v)", f.DefValue))
