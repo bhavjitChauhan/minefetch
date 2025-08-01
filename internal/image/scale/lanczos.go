@@ -32,9 +32,9 @@ func Lanczos(src image.Image, f float64) image.Image {
 			sx := (float64(x)+.5)/f - .5
 			sy := (float64(y)+.5)/f - .5
 			w := 1 / weight(a, sx) * weight(a, sy) * f * f
-			for j := float64(-fa + 1); j < fa; j++ {
+			for j := -fa + 1; j < fa; j++ {
 				lj := lanczos(uint(fa), (j-sy+math.Floor(sy))*f)
-				for i := float64(-fa + 1); i < fa; i++ {
+				for i := -fa + 1; i < fa; i++ {
 					sxi := clamp(int(math.Floor(sx)+i), 0, sb.Dx()-1)
 					syj := clamp(int(math.Floor(sy)+j), 0, sb.Dy()-1)
 					wl := lanczos(uint(fa), (i-sx+math.Floor(sx))*f) * lj * w

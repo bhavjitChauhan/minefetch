@@ -95,8 +95,14 @@ func readCompressedPacket(r io.Reader) (id int32, buf *bytes.Buffer, err error) 
 	if err != nil {
 		return
 	}
-	io.Copy(buf, rc)
-	rc.Close()
+	_, err = io.Copy(buf, rc)
+	if err != nil {
+		return
+	}
+	err = rc.Close()
+	if err != nil {
+		return
+	}
 
 	id, err = readVarInt(buf)
 

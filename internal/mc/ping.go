@@ -25,7 +25,7 @@ func readPongResponse(r io.Reader, t0 int64) error {
 	if err != nil {
 		return err
 	}
-	if id != 0x01 {
+	if id != statusPacketIdPongResponse {
 		return errors.New(fmt.Sprint("unexpected packet ID: ", id))
 	}
 
