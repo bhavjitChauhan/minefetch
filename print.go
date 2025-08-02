@@ -240,7 +240,7 @@ func printResults(results results) {
 		}, ansi.Red+"Offline")
 	}
 
-	if cfg.crossplay && (results[resultStatus].v == nil) {
+	if cfg.crossplay && results[resultStatus].v == nil && results[resultBedrockStatus].v != nil {
 		cfg.bedrock = true
 		cfg.crossplay = false
 	}
