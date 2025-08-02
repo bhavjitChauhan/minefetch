@@ -28,7 +28,7 @@ func startResults(ch chan<- result) {
 	if cfg.status {
 		go func() {
 			status, err := mc.Status(cfg.host, cfg.port, cfg.proto)
-			ch <- result{idStatus, status, err, false}
+			ch <- result{resultStatus, status, err, false}
 		}()
 	}
 
@@ -36,7 +36,7 @@ func startResults(ch chan<- result) {
 		go func() {
 			address := net.JoinHostPort(cfg.argHost, strconv.Itoa(int(cfg.bedrockPort)))
 			status, err := mcpe.Status(address)
-			ch <- result{idBedrockStatus, status, err, false}
+			ch <- result{resultBedrockStatus, status, err, false}
 		}()
 	}
 
@@ -48,14 +48,14 @@ func startResults(ch chan<- result) {
 			}
 			address := net.JoinHostPort(cfg.host, strconv.Itoa(int(queryPort)))
 			query, err := mc.Query(address)
-			ch <- result{idQuery, query, err, false}
+			ch <- result{resultQuery, query, err, false}
 		}()
 	}
 
 	if cfg.blocked {
 		go func() {
 			blocked, err := mc.IsBlocked(cfg.host)
-			ch <- result{idBlocked, blocked, err, false}
+			ch <- result{resultBlocked, blocked, err, false}
 		}()
 	}
 
@@ -63,7 +63,7 @@ func startResults(ch chan<- result) {
 		go func() {
 			// TODO: use server protocol from status response?
 			cracked, whitelisted, err := mc.IsCracked(cfg.host, cfg.port, cfg.proto)
-			ch <- result{idCracked, [2]bool{cracked, whitelisted}, err, false}
+			ch <- result{resultCracked, [2]bool{cracked, whitelisted}, err, false}
 		}()
 	}
 
@@ -71,7 +71,7 @@ func startResults(ch chan<- result) {
 		go func() {
 			address := net.JoinHostPort(cfg.host, strconv.Itoa(int(cfg.rconPort)))
 			enabled, _ := mc.IsRconEnabled(address)
-			ch <- result{idRcon, enabled, nil, false}
+			ch <- result{resultRcon, enabled, nil, false}
 		}()
 	}
 }
@@ -85,7 +85,7 @@ func collectResults(ch <-chan result, timeout <-chan time.Time) results {
 	for ; n > 0; n-- {
 		select {
 		case result := <-ch:
-			results[result.id] = result
+			results[result.i] = result
 		case <-timeout:
 			n = 0
 		}

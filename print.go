@@ -15,12 +15,12 @@ import (
 )
 
 const (
-	idStatus = iota
-	idBedrockStatus
-	idQuery
-	idBlocked
-	idCracked
-	idRcon
+	resultStatus = iota
+	resultBedrockStatus
+	resultQuery
+	resultBlocked
+	resultCracked
+	resultRcon
 )
 
 type results [6]result
@@ -30,7 +30,7 @@ const padding = 2
 var lines = 0
 
 type result struct {
-	id      int
+	i       int
 	v       any
 	err     error
 	timeout bool
@@ -222,39 +222,39 @@ func printResult[T any](result result, label string, fn func(T)) {
 }
 
 func printResults(results results) {
-	if cfg.icon && (!cfg.status || results[idStatus].err != nil || results[idStatus].timeout) {
+	if cfg.icon && (!cfg.status || results[resultStatus].err != nil || results[resultStatus].timeout) {
 		printIcon(nil)
 	}
 
 	if cfg.status {
-		result := results[idStatus]
+		result := results[resultStatus]
 		if result.err != nil || result.timeout {
 			cfg.status = false
 		}
-		printResult(results[idStatus], "Status", func(status mc.StatusResponse) {
+		printResult(results[resultStatus], "Status", func(status mc.StatusResponse) {
 			printStatus(&status)
 		})
 	}
 
-	if cfg.crossplay && (results[idStatus].v == nil) {
+	if cfg.crossplay && (results[resultStatus].v == nil) {
 		cfg.bedrock = true
 		cfg.crossplay = false
 	}
 	if cfg.bedrock {
-		printResult(results[idBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
+		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
 			printBedrock(status)
 		})
 	}
 
 	if cfg.query {
-		result := results[idQuery]
+		result := results[resultQuery]
 		printResult(result, "Query", func(query mc.QueryResponse) {
 			printQuery(query)
 		})
 	}
 
 	if cfg.crossplay {
-		printResult(results[idBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
+		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
 			printData("Crossplay", ansi.Green+"Yes")
 		})
 	}
@@ -262,13 +262,13 @@ func printResults(results results) {
 	printNetInfo()
 
 	if cfg.blocked {
-		printResult(results[idBlocked], "Blocked", func(blocked string) {
+		printResult(results[resultBlocked], "Blocked", func(blocked string) {
 			printData("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
 		})
 	}
 
 	if cfg.cracked {
-		printResult(results[idCracked], "Cracked", func(crackedWhitelisted [2]bool) {
+		printResult(results[resultCracked], "Cracked", func(crackedWhitelisted [2]bool) {
 			printData("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
 			if crackedWhitelisted[0] {
 				printData("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
@@ -277,7 +277,7 @@ func printResults(results results) {
 	}
 
 	if cfg.rcon {
-		printResult(results[idRcon], "RCON", func(enabled bool) {
+		printResult(results[resultRcon], "RCON", func(enabled bool) {
 			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		})
 	}
