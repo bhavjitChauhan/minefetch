@@ -9,18 +9,22 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strconv"
 )
 
 // Determines if a server is in offline mode by attempting to login.
-func IsCracked(host string, port uint16, ver int32) (cracked bool, whitelisted bool, err error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
+func IsCracked(address string, ver int32) (cracked bool, whitelisted bool, err error) {
+	host, port, err := SplitHostPort(address)
+	if err != nil {
+		return
+	}
+
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
-	err = writeHandshake(conn, ver, host, port, intentLogin)
+	err = writeHandshake(conn, ver, host, uint16(port), intentLogin)
 	if err != nil {
 		return
 	}

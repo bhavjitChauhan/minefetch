@@ -122,6 +122,14 @@ func Parse() (remaining []string, err error) {
 				return
 			}
 			*p = uint(uint64)
+		case *uint16:
+			var uint64 uint64
+			uint64, err = strconv.ParseUint(v, 10, 0)
+			if err != nil {
+				err = fmt.Errorf("failed to parse integer flag value: %v", v)
+				return
+			}
+			*p = uint16(uint64)
 		case *time.Duration:
 			var d time.Duration
 			d, err = time.ParseDuration(v)

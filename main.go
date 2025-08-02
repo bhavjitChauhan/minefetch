@@ -4,8 +4,6 @@ import (
 	"log"
 	"minefetch/internal/mc"
 	"minefetch/internal/mcpe"
-	"net"
-	"strconv"
 	"time"
 )
 
@@ -27,15 +25,14 @@ func main() {
 func startResults(ch chan<- result) {
 	if cfg.status {
 		go func() {
-			status, err := mc.Status(cfg.host, cfg.port, cfg.proto)
+			status, err := mc.Status(mc.JoinHostPort(cfg.host, cfg.port), cfg.proto)
 			ch <- result{resultStatus, status, err, false}
 		}()
 	}
 
 	if cfg.bedrock || cfg.crossplay {
 		go func() {
-			address := net.JoinHostPort(cfg.argHost, strconv.Itoa(int(cfg.bedrockPort)))
-			status, err := mcpe.Status(address)
+			status, err := mcpe.Status(mc.JoinHostPort(cfg.argHost, cfg.bedrockPort))
 			ch <- result{resultBedrockStatus, status, err, false}
 		}()
 	}
@@ -44,10 +41,9 @@ func startResults(ch chan<- result) {
 		go func() {
 			queryPort := cfg.queryPort
 			if queryPort == 0 {
-				queryPort = uint(cfg.port)
+				queryPort = cfg.port
 			}
-			address := net.JoinHostPort(cfg.host, strconv.Itoa(int(queryPort)))
-			query, err := mc.Query(address)
+			query, err := mc.Query(mc.JoinHostPort(cfg.host, cfg.queryPort))
 			ch <- result{resultQuery, query, err, false}
 		}()
 	}
@@ -62,15 +58,14 @@ func startResults(ch chan<- result) {
 	if cfg.cracked {
 		go func() {
 			// TODO: use server protocol from status response?
-			cracked, whitelisted, err := mc.IsCracked(cfg.host, cfg.port, cfg.proto)
+			cracked, whitelisted, err := mc.IsCracked(mc.JoinHostPort(cfg.host, cfg.port), cfg.proto)
 			ch <- result{resultCracked, [2]bool{cracked, whitelisted}, err, false}
 		}()
 	}
 
 	if cfg.rcon {
 		go func() {
-			address := net.JoinHostPort(cfg.host, strconv.Itoa(int(cfg.rconPort)))
-			enabled, _ := mc.IsRconEnabled(address)
+			enabled, _ := mc.IsRconEnabled(mc.JoinHostPort(cfg.host, cfg.rconPort))
 			ch <- result{resultRcon, enabled, nil, false}
 		}()
 	}

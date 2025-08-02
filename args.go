@@ -26,11 +26,11 @@ var cfg = struct {
 	bedrockPort uint16
 	crossplay   bool
 	query       bool
-	queryPort   uint
+	queryPort   uint16
 	blocked     bool
 	cracked     bool
 	rcon        bool
-	rconPort    uint
+	rconPort    uint16
 	palette     bool
 	color       string
 	argHost     string
@@ -121,40 +121,34 @@ func parseArgs() (err error) {
 		cfg.crossplay = false
 	}
 
-	var argPort string
+	var port uint16
 	switch len(args) {
 	case 0:
 		cfg.argHost = cfg.host
 	case 1:
-		cfg.argHost, argPort, err = net.SplitHostPort(args[0])
+		cfg.argHost, port, err = mc.SplitHostPort(args[0])
 		if err != nil {
 			err = nil
 			cfg.argHost = args[0]
 		}
 	case 2:
 		cfg.argHost = args[0]
-		argPort = args[1]
+		port, err = parseUint16(args[1])
+		if err != nil {
+			return
+		}
 	default:
 		log.Print("Too many arguments.\n\n")
 		printHelp()
 	}
 
 	cfg.host = cfg.argHost
-	var port uint16
 	if !cfg.bedrock && net.ParseIP(cfg.host) == nil {
 		_, addrs, err := net.LookupSRV("minecraft", "tcp", cfg.host)
 		if err == nil && len(addrs) > 0 {
 			cfg.host = strings.TrimSuffix(addrs[0].Target, ".")
 			port = addrs[0].Port
 		}
-	}
-	if argPort != "" {
-		var int int
-		int, err = strconv.Atoi(argPort)
-		if err != nil {
-			return
-		}
-		port = uint16(int)
 	}
 	if port != 0 {
 		cfg.port = port
@@ -176,8 +170,16 @@ func parseFlagProto(proto string) int32 {
 
 	i, err := strconv.Atoi(proto)
 	if err != nil {
-		log.Fatalln("Failed to parse protocol version:", cfg.proto)
+		log.Fatalln("Failed to parse protocol version:", proto)
 	}
 
 	return int32(i)
+}
+
+func parseUint16(s string) (uint16, error) {
+	int, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, err
+	}
+	return uint16(int), nil
 }

@@ -10,7 +10,6 @@ import (
 	"image/png"
 	"io"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -36,10 +35,13 @@ type StatusResponse struct {
 	Latency             time.Duration
 }
 
-// TODO: merge host and port into address parameter
+func Status(address string, ver int32) (status StatusResponse, err error) {
+	host, port, err := SplitHostPort(address)
+	if err != nil {
+		return
+	}
 
-func Status(host string, port uint16, ver int32) (status StatusResponse, err error) {
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, strconv.Itoa(int(port))))
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return
 	}
