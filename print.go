@@ -204,18 +204,22 @@ func printQuery(query mc.QueryResponse) {
 	}
 }
 
-func printResult[T any](result result, label string, fn func(T)) {
+func printResult[T any](result result, label string, fn func(T), failed string) {
 	switch {
-	case result.err != nil:
-		printErr(label, result.err)
 	case result.v != nil:
 		v, ok := result.v.(T)
 		if !ok {
 			log.Panicf("Unexpected result value for %v: %v", label, result.v)
 		}
 		fn(v)
-	case result.timeout:
-		printTimeout(label)
+	case result.err != nil, result.timeout:
+		if failed != "" {
+			printData(label, failed)
+		} else if result.timeout {
+			printTimeout(label)
+		} else {
+			printErr(label, result.err)
+		}
 	default:
 		log.Panicln("Unexpected result state:", result)
 	}
@@ -231,9 +235,9 @@ func printResults(results results) {
 		if result.err != nil || result.timeout {
 			cfg.status = false
 		}
-		printResult(results[resultStatus], "Status", func(status mc.StatusResponse) {
+		printResult(results[resultStatus], "Java", func(status mc.StatusResponse) {
 			printStatus(&status)
-		})
+		}, ansi.Red+"Offline")
 	}
 
 	if cfg.crossplay && (results[resultStatus].v == nil) {
@@ -243,20 +247,20 @@ func printResults(results results) {
 	if cfg.bedrock {
 		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
 			printBedrock(status)
-		})
+		}, ansi.Red+"Offline")
 	}
 
 	if cfg.query {
 		result := results[resultQuery]
 		printResult(result, "Query", func(query mc.QueryResponse) {
 			printQuery(query)
-		})
+		}, ansi.Red+"Disabled")
 	}
 
 	if cfg.crossplay {
 		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
 			printData("Crossplay", ansi.Green+"Yes")
-		})
+		}, ansi.Red+"Disabled")
 	}
 
 	printNetInfo()
@@ -264,7 +268,7 @@ func printResults(results results) {
 	if cfg.blocked {
 		printResult(results[resultBlocked], "Blocked", func(blocked string) {
 			printData("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
-		})
+		}, "")
 	}
 
 	if cfg.cracked {
@@ -273,13 +277,13 @@ func printResults(results results) {
 			if crackedWhitelisted[0] {
 				printData("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
 			}
-		})
+		}, "")
 	}
 
 	if cfg.rcon {
 		printResult(results[resultRcon], "RCON", func(enabled bool) {
 			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
-		})
+		}, "")
 	}
 
 	if cfg.palette {
