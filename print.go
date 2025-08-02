@@ -37,12 +37,15 @@ type result struct {
 }
 
 func printData(label string, data any) {
-	s := strings.Split(fmt.Sprint(data), "\n")
+	ss := strings.Split(fmt.Sprint(data), "\n")
 	if cfg.icon {
 		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
 	}
-	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + s[0])
-	for _, v := range s[1:] {
+	if len(ss) == 1 && ansi.RemoveCsi(ss[0]) == "" {
+		ss[0] = ansi.Gray + "(empty)"
+	}
+	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + ss[0])
+	for _, v := range ss[1:] {
 		fwd := uint(len(label)) + 2
 		if cfg.icon {
 			fwd += cfg.iconSize + padding
@@ -52,7 +55,7 @@ func printData(label string, data any) {
 		}
 	}
 	fmt.Print(ansi.Reset)
-	lines += len(s)
+	lines += len(ss)
 }
 
 func printErr(label string, err error) {
