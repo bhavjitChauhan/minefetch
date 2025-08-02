@@ -91,7 +91,9 @@ func collectResults(ch <-chan result, timeout <-chan time.Time) results {
 		}
 	}
 	for i, r := range results {
-		if r.v == nil && r.err == nil {
+		if r.err != nil {
+			results[i].v = nil
+		} else if r.v == nil && r.err == nil {
 			results[i].timeout = true
 		}
 	}

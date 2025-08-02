@@ -14,7 +14,6 @@ import (
 	"unicode/utf8"
 )
 
-// TODO: better names
 const (
 	idStatus = iota
 	idBedrockStatus
@@ -237,6 +236,10 @@ func printResults(results results) {
 		})
 	}
 
+	if cfg.crossplay && (results[idStatus].v == nil) {
+		cfg.bedrock = true
+		cfg.crossplay = false
+	}
 	if cfg.bedrock {
 		printResult(results[idBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
 			printBedrock(status)
