@@ -35,7 +35,7 @@ type StatusResponse struct {
 	Latency             time.Duration
 }
 
-func Status(address string, ver int32) (status StatusResponse, err error) {
+func Status(address string, proto int32) (status StatusResponse, err error) {
 	host, port, err := SplitHostPort(address)
 	if err != nil {
 		return
@@ -47,7 +47,7 @@ func Status(address string, ver int32) (status StatusResponse, err error) {
 	}
 	defer conn.Close()
 
-	err = writeHandshake(conn, ver, host, port, intentStatus)
+	err = writeHandshake(conn, proto, host, port, intentStatus)
 	if err != nil {
 		err = errors.New("Failed to write handshake: " + err.Error())
 		return

@@ -15,10 +15,10 @@ const (
 	intentTransfer
 )
 
-func writeHandshake(w io.Writer, ver int32, host string, port uint16, intent intent) error {
+func writeHandshake(w io.Writer, proto int32, host string, port uint16, intent intent) error {
 	buf := &bytes.Buffer{}
 	err1 := writeVarInt(buf, handshakePacketId)
-	err2 := writeVarInt(buf, ver)
+	err2 := writeVarInt(buf, proto)
 	err3 := writeString(buf, host)
 	err4 := binary.Write(buf, binary.BigEndian, port)
 	err5 := writeVarInt(buf, int32(intent))

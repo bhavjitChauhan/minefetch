@@ -12,7 +12,7 @@ import (
 )
 
 // Determines if a server is in offline mode by attempting to login.
-func IsCracked(address string, ver int32) (cracked bool, whitelisted bool, err error) {
+func IsCracked(address string, proto int32) (cracked bool, whitelisted bool, err error) {
 	host, port, err := SplitHostPort(address)
 	if err != nil {
 		return
@@ -24,7 +24,7 @@ func IsCracked(address string, ver int32) (cracked bool, whitelisted bool, err e
 	}
 	defer conn.Close()
 
-	err = writeHandshake(conn, ver, host, uint16(port), intentLogin)
+	err = writeHandshake(conn, proto, host, uint16(port), intentLogin)
 	if err != nil {
 		return
 	}
