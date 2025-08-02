@@ -47,8 +47,10 @@ func printData(label string, data any) {
 		fwd := uint(len(label)) + 2
 		if cfg.icon {
 			fwd += cfg.iconSize + padding
+			fmt.Println(ansi.Fwd(fwd) + v)
+		} else {
+			fmt.Println(strings.Repeat(" ", int(fwd)) + v)
 		}
-		fmt.Println(ansi.Fwd(fwd) + v)
 	}
 	fmt.Print(ansi.Reset)
 	lines += len(s)

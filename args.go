@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"minefetch/internal/ansi"
 	"minefetch/internal/flag"
 	"minefetch/internal/mc"
 	"net"
@@ -31,6 +32,7 @@ var cfg = struct {
 	rcon        bool
 	rconPort    uint
 	palette     bool
+	color       string
 	argHost     string
 }{
 	host:        "localhost",
@@ -43,6 +45,7 @@ var cfg = struct {
 	iconSize:    32,
 	rconPort:    25575,
 	palette:     true,
+	color:       "auto",
 }
 
 func printHelp() {
@@ -74,14 +77,43 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.rcon, "rcon", 'r', cfg.rcon, "Check if the RCON protocol is enabled.")
 	flag.Var(&cfg.rconPort, "rcon-port", 0, cfg.rconPort, "RCON protocol port.")
 	flag.Var(&cfg.palette, "no-palette", 0, cfg.palette, "Print Minecraft's formatting code colors.")
+	flag.Var(&cfg.color, "color", 0, cfg.color, "Override terminal color support detection. (0, 16, 256, true)")
 
 	args, err := flag.Parse()
 	if err != nil {
-		log.Fatalln("Failed to parse flags:", err)
+		return
 	}
 
 	if cfg.help {
 		printHelp()
+	}
+
+	if cfg.color != "auto" {
+		switch cfg.color {
+		case "0":
+			ansi.ColorSupport = ansi.NoColorSupport
+		case "16":
+			ansi.ColorSupport = ansi.Color16Support
+		case "256":
+			ansi.ColorSupport = ansi.Color256Support
+		// https://github.com/chalk/supports-color/blob/ae809ecabd5965d0685e7fc121efe98c47ad8724/index.js#L85-L87
+		case "true", "16m", "full", "truecolor":
+			ansi.ColorSupport = ansi.TrueColorSupport
+		// https://bixense.com/clicolors
+		case "", "always", "on":
+			if ansi.ColorSupport == ansi.NoColorSupport {
+				ansi.ColorSupport = ansi.Color16Support
+			}
+		case "never", "no":
+			ansi.ColorSupport = ansi.NoColorSupport
+		default:
+			return fmt.Errorf("invalid colors: %v", cfg.color)
+		}
+	}
+	if ansi.ColorSupport == ansi.NoColorSupport {
+		ansi.NoColor()
+		cfg.icon = false
+		cfg.palette = false
 	}
 
 	if cfg.bedrock {
