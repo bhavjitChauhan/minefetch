@@ -26,7 +26,7 @@ type StatusResponse struct {
 	}
 	ID       string
 	Level    string
-	Gamemode struct {
+	GameMode struct {
 		Name string
 		ID   int
 	}
@@ -107,11 +107,11 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	}
 	status.ID = ss[6]
 	status.Level = ss[7]
-	status.Gamemode.Name = ss[8]
+	status.GameMode.Name = ss[8]
 	if len(ss) == 9 {
 		return
 	}
-	status.Gamemode.ID, err = strconv.Atoi(ss[9])
+	status.GameMode.ID, err = strconv.Atoi(ss[9])
 	if err != nil {
 		return
 	}

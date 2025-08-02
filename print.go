@@ -182,7 +182,7 @@ func printBedrock(status mcpe.StatusResponse) {
 	printData("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
 	printPlayers(status.Players.Online, status.Players.Max, nil)
 	printData("Edition", status.Edition)
-	printData("Gamemode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Gamemode.Name, status.Gamemode.ID))
+	printData("Game Mode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.GameMode.Name, status.GameMode.ID))
 }
 
 func printQuery(query mc.QueryResponse) {
