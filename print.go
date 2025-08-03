@@ -263,7 +263,7 @@ func printResults(results results) {
 	if cfg.crossplay {
 		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
 			printData("Crossplay", ansi.Green+"Yes")
-		}, ansi.Red+"Disabled")
+		}, ansi.Red+"No")
 		if results[resultBedrockStatus].v == nil {
 			cfg.crossplay = false
 		}
