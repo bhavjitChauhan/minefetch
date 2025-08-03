@@ -88,6 +88,14 @@ func parseArgs() (err error) {
 		printHelp()
 	}
 
+	if cfg.bedrock {
+		cfg.status = false
+	}
+
+	if !cfg.status {
+		cfg.crossplay = false
+	}
+
 	if cfg.color != "auto" {
 		switch cfg.color {
 		case "0":
@@ -114,11 +122,6 @@ func parseArgs() (err error) {
 		ansi.NoColor()
 		cfg.icon = false
 		cfg.palette = false
-	}
-
-	if cfg.bedrock {
-		cfg.status = false
-		cfg.crossplay = false
 	}
 
 	var port uint16
