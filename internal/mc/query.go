@@ -159,7 +159,7 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 	}
 
 	for {
-		var k, v string
+		var k string
 		k, err = br.ReadString(0)
 		if err != nil {
 			return
@@ -168,10 +168,17 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 			break
 		}
 
-		v, err = br.ReadString(0)
+		var b []byte
+		b, err = br.ReadBytes(0)
 		if err != nil {
 			return
 		}
+		// Convert ISO 8859-1 to UTF-8
+		buf := make([]rune, len(b))
+		for i, b := range b {
+			buf[i] = rune(b)
+		}
+		v := string(buf)
 
 		k = k[:len(k)-1]
 		v = v[:len(v)-1]
