@@ -14,6 +14,20 @@ import (
 	"time"
 )
 
+// StatusResponse contains general server info provided by the [Server List Ping interface].
+//
+// Any string field except Icon and Uuid may contain legacy formatting.
+//
+// Version.Name may contain any third-party server software name.
+// This field is only visible on vanilla clients when the reported Protocol is incompatible.
+// Some servers use this field along with an invalid Protocol to display arbitrary information.
+//
+// Sample is sometimes used to display arbitrary information.
+//
+// PreventsChatReports is sent by servers using plugins or mods like [No Chat Reports].
+//
+// [Server List Ping interface]: https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
+// [No Chat Reports]: https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
 type StatusResponse struct {
 	Version struct {
 		Name     string
@@ -29,12 +43,25 @@ type StatusResponse struct {
 			Name string
 		}
 	}
-	Icon Icon `json:"favicon"`
-	// https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
+	Icon                Icon `json:"favicon"`
 	PreventsChatReports bool
 	Latency             time.Duration
 }
 
+// Status attempts to get general server info using the [Server List Ping interface].
+//
+// This is the same interface used by the in-game server list.
+//
+// Most MOTD plugins will fall back to legacy formatting codes for proto versions before 1.16.
+//
+// It is possible for servers to disable the Server List Ping interface,
+// so no response does not necessarily mean a server is offline.
+//
+// Some servers only respond to a second request.
+// This may be a countermeasure against server scanners like [Copenheimer].
+//
+// [Server List Ping interface]: https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
+// [Copenheimer]: https://2b2t.miraheze.org/wiki/Fifth_Column#Copenheimer
 func Status(address string, proto int32) (status StatusResponse, err error) {
 	host, port, err := SplitHostPort(address)
 	if err != nil {
@@ -79,9 +106,12 @@ func Status(address string, proto int32) (status StatusResponse, err error) {
 	return
 }
 
+// An Icon is a decoded server icon.
+//
+// The raw PNG is also stored in the form of the base64 representation directly from the server.
 type Icon struct {
 	image.Image
-	Raw string
+	Raw string // Base64-encoded PNG
 }
 
 func (icon *Icon) UnmarshalJSON(b []byte) error {
@@ -101,6 +131,7 @@ func (icon *Icon) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Status_Request
 func writeStatusRequest(w io.Writer) error {
 	buf := &bytes.Buffer{}
 	err := writeVarInt(buf, statusPacketIdStatusRequest)
@@ -111,6 +142,7 @@ func writeStatusRequest(w io.Writer) error {
 	return writePacket(w, buf.Bytes())
 }
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Status_Response
 func readStatusResponse(r io.Reader, status *StatusResponse) error {
 	id, buf, err := readPacket(r)
 	if err != nil {

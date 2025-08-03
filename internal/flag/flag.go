@@ -2,15 +2,15 @@
 Package flag implements POSIX/GNU-like command-line flag parsing.
 However, the package does not strictly adhere to any standard.
 
+"Flag runes" are single-character flags (e.g. -f).
+
+"Flag strings" consist of multiple flag runes (e.g. -fgh).
+Flag strings may only contain toggle flags.
+
 "Toggle flags" handle boolean variables.
 If a toggle flag is present, the boolean value will be set to the opposite of the default.
 If a default value is not provided, the flag will be set to true.
 Toggle flags cannot be assigned a value.
-
-*Flag runes* are single-character flags.
-
-*Flag strings* consist of multiple flag runes.
-Flag strings may only contain toggle flags.
 */
 package flag
 

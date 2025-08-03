@@ -13,6 +13,9 @@ import (
 	"time"
 )
 
+// QueryResponse contains general server info provided by the [query protocol].
+//
+// [query protocol]: https://minecraft.wiki/w/Query
 type QueryResponse struct {
 	Motd string
 	Game struct {
@@ -31,6 +34,15 @@ type QueryResponse struct {
 	Ip   net.IP
 }
 
+// Query attempts to get general server info using the [query protocol].
+//
+// It is very similar to Status, but may contain more players and additional information about plugins.
+// However, the query protocol is not widely enabled by public servers.
+//
+// The query protocol encodes strings in ISO 8859-1.
+// Query will convert all strings to UTF-8 to support legacy formatting codes.
+//
+// [query protocol]: https://minecraft.wiki/w/Query
 func Query(address string) (status QueryResponse, err error) {
 	conn, err := net.Dial("udp", address)
 	if err != nil {
@@ -72,6 +84,7 @@ const (
 	queryPacketTypeStat      queryPacketType = 0
 )
 
+// https://minecraft.wiki/w/Query#Client_to_Server_Packet_Format
 func writeQueryPacket(w io.Writer, t queryPacketType, id int32, payload ...any) (err error) {
 	buf := &bytes.Buffer{}
 	err1 := binary.Write(buf, binary.BigEndian, queryMagic)
@@ -90,14 +103,17 @@ func writeQueryPacket(w io.Writer, t queryPacketType, id int32, payload ...any) 
 	return
 }
 
+// https://minecraft.wiki/w/Query#Request
 func writeQueryHandshake(w io.Writer, id int32) error {
 	return writeQueryPacket(w, queryPacketTypeHandshake, id, nil)
 }
 
+// https://minecraft.wiki/w/Query#Request_3
 func writeQueryStatus(w io.Writer, id, token int32) error {
 	return writeQueryPacket(w, queryPacketTypeStat, id, token, int32(0))
 }
 
+// https://minecraft.wiki/w/Query#Server_to_Client_Packet_Format
 func readQueryPacketHeader(r *bufio.Reader, t queryPacketType, id int32) (err error) {
 	var st queryPacketType
 	var sid int32
@@ -119,6 +135,7 @@ func readQueryPacketHeader(r *bufio.Reader, t queryPacketType, id int32) (err er
 	return
 }
 
+// https://minecraft.wiki/w/Query#Response
 func readQueryHandshake(r io.Reader, id int32) (token int32, err error) {
 	br := bufio.NewReader(r)
 
@@ -141,6 +158,7 @@ func readQueryHandshake(r io.Reader, id int32) (token int32, err error) {
 	return
 }
 
+// https://minecraft.wiki/w/Query#Response_3
 func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 	br := bufio.NewReader(r)
 
@@ -149,6 +167,7 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 		return
 	}
 
+	// Padding
 	n, err := br.Discard(11)
 	if err != nil {
 		return
@@ -226,6 +245,7 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 		}
 	}
 
+	// Padding
 	n, err = br.Discard(10)
 	if err != nil {
 		return

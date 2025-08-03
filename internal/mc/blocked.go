@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+// IsBlocked reports whether host is listed in Mojang's [blocked servers list].
+//
+// [blocked servers list]: https://github.com/sudofox/mojang-blocklist
 func IsBlocked(host string) (selector string, err error) {
 	resp, err := http.Get("https://sessionserver.mojang.com/blockedservers")
 	if err != nil {

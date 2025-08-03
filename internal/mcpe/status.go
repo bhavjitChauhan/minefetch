@@ -35,6 +35,11 @@ type StatusResponse struct {
 	}
 }
 
+// Status attempts to get general server info using the [RakNet protocol].
+//
+// This is the same interface used by the in-game server list.
+//
+// [RakNet protocol]: https://minecraft.wiki/w/RakNet
 func Status(address string) (status StatusResponse, err error) {
 	udpAddr, _ := net.ResolveUDPAddr("udp", address)
 	conn, err := net.Dial("udp", udpAddr.String())
@@ -56,6 +61,7 @@ var magic = [16]byte{0x00, 0xff, 0xff, 0x00, 0xfe, 0xfe, 0xfe, 0xfe, 0xfd, 0xfd,
 
 const packetIdUnconnectedPing byte = 0x01
 
+// https://minecraft.wiki/w/RakNet#Unconnected_Ping
 func writeUnconnectedPing(w io.Writer) error {
 	buf := &bytes.Buffer{}
 	err1 := buf.WriteByte(packetIdUnconnectedPing)
@@ -66,6 +72,7 @@ func writeUnconnectedPing(w io.Writer) error {
 	return cmp.Or(err1, err2, err3, err4, err5)
 }
 
+// https://minecraft.wiki/w/RakNet#Unconnected_Pong
 func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	br := bufio.NewReader(r)
 	_, err = br.Discard(33) // packet ID + time + guid + magic

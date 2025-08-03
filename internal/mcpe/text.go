@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// LegacyTextAnsi converts [Minecraft legacy formatting] to ANSI escape codes.
+//
+// Bedrock Edition does not support the strikethrough and underlined codes.
+//
+// [Minecraft legacy formatting]: https://minecraft.wiki/w/Formatting_codes
 func LegacyTextAnsi(s string) string {
 	var b strings.Builder
 	esc := false
@@ -41,6 +46,9 @@ func LegacyTextAnsi(s string) string {
 	return b.String()
 }
 
+// Colors corresponding to legacy formatting color codes.
+//
+// Bedrock Edition supports 11 additional colors compared to the Java Edition.
 var (
 	Default           = color.NRGBA{128, 128, 128, 255}
 	Black             = color.NRGBA{0, 0, 0, 255}
@@ -73,6 +81,9 @@ var (
 	MaterialResin     = color.NRGBA{235, 114, 20, 255}
 )
 
+// ParseColor converts v to a Minecraft color.
+//
+// v may be a legacy formatting code, named color or hex color code.
 func ParseColor(v any) color.NRGBA {
 	switch v {
 	case '0', "black":

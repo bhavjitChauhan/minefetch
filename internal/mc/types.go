@@ -8,6 +8,7 @@ import (
 
 type uuid [16]byte
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#Type:String
 func readString(r io.Reader) (s string, err error) {
 	x, err := readVarInt(r)
 	if err != nil {

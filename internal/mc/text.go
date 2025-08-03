@@ -9,11 +9,12 @@ import (
 	"strings"
 )
 
+// Text is a text component format object.
+//
 // https://minecraft.wiki/w/Text_component_format#Java_Edition
 type Text struct {
-	Text  string
-	Extra []Text
-	// NOTE: legacy formatting codes take precedence
+	Text          string
+	Extra         []Text
 	Color         color.NRGBA
 	Bold          bool
 	Italic        bool
@@ -22,6 +23,7 @@ type Text struct {
 	Obfuscated    bool
 }
 
+// Raw returns all of t's descendents' Text fields flattened to a string.
 func (t Text) Raw() string {
 	var b strings.Builder
 	b.WriteString(t.Text)
@@ -31,6 +33,7 @@ func (t Text) Raw() string {
 	return b.String()
 }
 
+// Ansi returns a representation of t using ANSI escape codes.
 func (t Text) Ansi() string {
 	var b strings.Builder
 	b.WriteString(ansi.Color(t.Color))
@@ -66,6 +69,10 @@ func (t *Text) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// normText normalizes v to a Text struct.
+// Inheritance is precomputed; descendant components have their final text component formatting.
+//
+// v may be a string, text component object or a list of either.
 func normText(v any, parent Text) Text {
 	if parent.Color == (color.NRGBA{}) {
 		parent.Color = ParseColor(nil)
@@ -118,6 +125,9 @@ func normText(v any, parent Text) Text {
 	return Text{} // TODO: probably not...
 }
 
+// LegacyTextAnsi converts [Minecraft legacy formatting] to ANSI escape codes.
+//
+// [Minecraft legacy formatting]: https://minecraft.wiki/w/Formatting_codes
 func LegacyTextAnsi(s string) string {
 	var b strings.Builder
 	esc := false
@@ -147,7 +157,6 @@ func LegacyTextAnsi(s string) string {
 		case 'r':
 			b.WriteString(ansi.Reset)
 		default:
-			// https://minecraft.wiki/w/Formatting_codes#Java_Edition
 			if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
 				b.WriteString(ansi.Reset)
 				b.WriteString(ansi.Color(ParseColor(v)))
@@ -158,6 +167,7 @@ func LegacyTextAnsi(s string) string {
 	return b.String()
 }
 
+// Colors corresponding to legacy formatting color codes and the server list default text color.
 var (
 	Default     = color.NRGBA{128, 128, 128, 255}
 	Black       = color.NRGBA{0, 0, 0, 255}
@@ -178,6 +188,9 @@ var (
 	White       = color.NRGBA{255, 255, 255, 255}
 )
 
+// ParseColor converts v to a Minecraft color.
+//
+// v may be a legacy formatting code, named color or hex color code.
 func ParseColor(v any) color.NRGBA {
 	switch v {
 	case '0', "black":

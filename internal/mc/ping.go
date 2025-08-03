@@ -9,6 +9,7 @@ import (
 	"io"
 )
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#Ping_Request_(status)
 func writePingRequest(w io.Writer, t int64) error {
 	buf := &bytes.Buffer{}
 	err1 := writeVarInt(buf, statusPacketIdPingRequest)
@@ -20,6 +21,7 @@ func writePingRequest(w io.Writer, t int64) error {
 	return writePacket(w, buf.Bytes())
 }
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#Pong_Response_(status)
 func readPongResponse(r io.Reader, t0 int64) error {
 	id, buf, err := readPacket(r)
 	if err != nil {

@@ -15,6 +15,7 @@ const (
 	intentTransfer
 )
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#Handshake
 func writeHandshake(w io.Writer, proto int32, host string, port uint16, intent intent) error {
 	buf := &bytes.Buffer{}
 	err1 := writeVarInt(buf, handshakePacketId)

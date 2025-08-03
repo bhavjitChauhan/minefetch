@@ -10,6 +10,33 @@ import (
 	"time"
 )
 
+// IsRconEnabled reports whether the [remote console] (RCON) is enabled on the server at address.
+//
+// An empty-password login request is made,
+// and the validity of the response is used to determine whether RCON is enabled or not.
+//
+// [remote console]: https://minecraft.wiki/w/RCON
+func IsRconEnabled(address string) (enabled bool, err error) {
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	err = writeRconPacket(conn, rconPacketTypeLoginRequest, "")
+	if err != nil {
+		return
+	}
+
+	_, _, _, err = readRconPacket(conn)
+	if err != nil {
+		return
+	}
+
+	enabled = true
+	return
+}
+
 const (
 	rconPacketTypeLoginRequest  int32 = 3
 	rconPacketTypeLoginResponse int32 = 2
@@ -18,6 +45,7 @@ const (
 	rconPacketTypeFailed        int32 = -1
 )
 
+// https://minecraft.wiki/w/RCON#Packet_format
 func writeRconPacket(w io.Writer, t int32, payload string) error {
 	id := int32(time.Now().Unix())
 	buf1 := &bytes.Buffer{}
@@ -57,26 +85,5 @@ func readRconPacket(r io.Reader) (id int32, t int32, payload string, err error) 
 	payload, err3 := buf.ReadString(0)
 	err = cmp.Or(err1, err2, err3)
 
-	return
-}
-
-func IsRconEnabled(address string) (enabled bool, err error) {
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-
-	err = writeRconPacket(conn, rconPacketTypeLoginRequest, "")
-	if err != nil {
-		return
-	}
-
-	_, _, _, err = readRconPacket(conn)
-	if err != nil {
-		return
-	}
-
-	enabled = true
 	return
 }

@@ -34,6 +34,7 @@ const (
 	loginPacketIdLoginCookieRequest
 )
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#Without_compression
 func writePacket(w io.Writer, p []byte) error {
 	buf := &bytes.Buffer{}
 	err1 := writeVarInt(buf, int32(len(p)))
@@ -66,6 +67,7 @@ func readPacket(r io.Reader) (id int32, buf *bytes.Buffer, err error) {
 	return
 }
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Packets#With_compression
 func readCompressedPacket(r io.Reader) (id int32, buf *bytes.Buffer, err error) {
 	n, err := readVarInt(r)
 	if err != nil {

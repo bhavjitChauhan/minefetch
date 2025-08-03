@@ -1,11 +1,17 @@
 package mc
 
-// https://minecraft.wiki/w/Protocol_version#Java_Edition_2
-
 const (
 	LatestVersion int32 = 772 - iota
 )
 
+// VersionIdName maps [protocol version numbers] (PVNs) to string representations.
+//
+// See the comment on VersionNameId for details on the string representation.
+//
+// For PVNs that map to multiple versions, only the earliest and latest versions are listed.
+// For example, the PVN 47 maps to 22 versions, but only the range "1.8 - 1.8.9" is expressed.
+//
+// [protocol version numbers]: https://minecraft.wiki/w/Protocol_version
 var VersionIdName = map[int32]string{
 	773:        "1.21.8",
 	772:        "1.21.7",
@@ -635,6 +641,17 @@ var VersionIdName = map[int32]string{
 	0x40000001: "1.16.4-pre1",
 }
 
+// VersionNameId maps version string representations to [protocol version numbers] (PVNs).
+//
+// The string representations are taken from the Minecraft Wiki [Protocol version] page,
+// with the following modifications:
+//   - "Release Candidate X" becomes "-rcX"
+//   - "Pre-Release X" becomes "-preX"
+//
+// Multiple strings may map to the same PVN.
+//
+// [protocol version numbers]: https://minecraft.wiki/w/Protocol_version
+// [Protocol version]: https://minecraft.wiki/w/Protocol_version#Java_Edition_2
 var VersionNameId = map[string]int32{
 	"1.21.8":                            772,
 	"1.21.7":                            772,

@@ -11,7 +11,13 @@ import (
 	"net"
 )
 
-// Determines if a server is in offline mode by attempting to login.
+// IsCracked reports whether the server at address has online mode disabled.
+//
+// An unauthenticated login request is sent, and the response is used to determine the mode.
+// Whitelist detection is not accurate as servers can customize the disconnect message.
+//
+// Note that login attempts are logged in the server console,
+// and operators will see an unexpected disconnect message there.
 func IsCracked(address string, proto int32) (cracked bool, whitelisted bool, err error) {
 	host, port, err := SplitHostPort(address)
 	if err != nil {
