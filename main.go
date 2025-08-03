@@ -43,7 +43,7 @@ func startResults(ch chan<- result) {
 			if queryPort == 0 {
 				queryPort = cfg.port
 			}
-			query, err := mc.Query(mc.JoinHostPort(cfg.host, cfg.queryPort))
+			query, err := mc.Query(mc.JoinHostPort(cfg.host, queryPort))
 			ch <- result{resultQuery, query, err, false}
 		}()
 	}
