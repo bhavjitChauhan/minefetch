@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/base64"
+	"bytes"
 	"fmt"
 	"log"
 	"minefetch/internal/ansi"
@@ -120,7 +120,7 @@ func printPlayers(online, max int, sample []string) {
 
 func printStatus(status *mc.StatusResponse) {
 	if cfg.icon {
-		printIcon(status.Icon.Image)
+		printIcon(status.Icon)
 	}
 
 	printMotd(status.Motd.Ansi())
@@ -160,8 +160,8 @@ func printStatus(status *mc.StatusResponse) {
 		printData("Protocol", s)
 	}
 
-	if status.Icon.Image != nil {
-		iconConfig, _ := pngconfig.DecodeConfig(base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(status.Icon.Raw, "data:image/png;base64,"))))
+	if status.Icon != nil {
+		iconConfig, _ := pngconfig.DecodeConfig(bytes.NewReader(status.Icon))
 		interlaced := ""
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "

@@ -6,11 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
-	"image/png"
 	"io"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -25,6 +22,8 @@ import (
 // Sample is sometimes used to display arbitrary information.
 //
 // PreventsChatReports is sent by servers using plugins or mods like [No Chat Reports].
+//
+// Icon is the raw encoded PNG data.
 //
 // [Server List Ping interface]: https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // [No Chat Reports]: https://github.com/Aizistral-Studios/No-Chat-Reports/wiki/How-to-Get-Safe-Server-Status
@@ -106,13 +105,7 @@ func Status(address string, proto int32) (status StatusResponse, err error) {
 	return
 }
 
-// An Icon is a decoded server icon.
-//
-// The raw PNG is also stored in the form of the base64 representation directly from the server.
-type Icon struct {
-	image.Image
-	Raw string // Base64-encoded PNG
-}
+type Icon []byte
 
 func (icon *Icon) UnmarshalJSON(b []byte) error {
 	var s string
@@ -122,12 +115,11 @@ func (icon *Icon) UnmarshalJSON(b []byte) error {
 	if s == "" {
 		return nil
 	}
-
-	r := base64.NewDecoder(base64.StdEncoding, strings.NewReader(strings.TrimPrefix(s, "data:image/png;base64,")))
-	img, err := png.Decode(r)
-
-	*icon = Icon{img, s}
-
+	b = []byte(s)
+	// len("data:image/png;base64,") = 22
+	b = b[22:]
+	*icon = make([]byte, len(b))
+	_, err := base64.StdEncoding.Decode(*icon, b)
 	return err
 }
 

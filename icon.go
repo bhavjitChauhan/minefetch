@@ -21,7 +21,11 @@ func iconHeight() uint {
 	return uint(float64(cfg.iconSize) * iconAspectRatio)
 }
 
-func printIcon(img image.Image) {
+func printIcon(b []byte) {
+	var img image.Image
+	if b != nil {
+		img, _ = png.Decode(bytes.NewReader(b))
+	}
 	if img == nil {
 		var err error
 		img, err = png.Decode(bytes.NewReader(defaultIcon))
