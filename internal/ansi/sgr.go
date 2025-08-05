@@ -43,6 +43,38 @@ var (
 	White   = "\033[97m"
 )
 
+// Color returns the sequence to set the foreground color to c.
+// It respects ColorSupport and will convert c to the closest supported color, if needed.
+func Color(c color.Color) string {
+	switch ColorSupport {
+	case NoColorSupport:
+		return ""
+	case Color16Support:
+		return fg16(c)
+	case Color256Support:
+		return fg256(c)
+	case TrueColorSupport:
+		return fg(c)
+	}
+	panic(fmt.Sprint("invalid color support: ", ColorSupport))
+}
+
+// Bg returns the sequence to set the background color to c.
+// It respects ColorSupport and will convert c to the closest supported color, if needed.
+func Bg(c color.Color) string {
+	switch ColorSupport {
+	case NoColorSupport:
+		return ""
+	case Color16Support:
+		return bg16(c)
+	case Color256Support:
+		return bg256(c)
+	case TrueColorSupport:
+		return bg(c)
+	}
+	panic(fmt.Sprint("invalid color support: ", ColorSupport))
+}
+
 func fg16(c color.Color) string {
 	c = color16.Convert(c)
 	code := uint8(color16.Index(c))
@@ -102,36 +134,4 @@ func fg(c color.Color) string {
 func bg(c color.Color) string {
 	n := color.NRGBAModel.Convert(c).(color.NRGBA)
 	return "\033[48;2;" + strconv.Itoa(int(n.R)) + ";" + strconv.Itoa(int(n.G)) + ";" + strconv.Itoa(int(n.B)) + "m"
-}
-
-// Color returns the sequence to set the foreground color to c.
-// It respects ColorSupport and will convert c to the closest supported color, if needed.
-func Color(c color.Color) string {
-	switch ColorSupport {
-	case NoColorSupport:
-		return ""
-	case Color16Support:
-		return fg16(c)
-	case Color256Support:
-		return fg256(c)
-	case TrueColorSupport:
-		return fg(c)
-	}
-	panic(fmt.Sprint("invalid color support: ", ColorSupport))
-}
-
-// Bg returns the sequence to set the background color to c.
-// It respects ColorSupport and will convert c to the closest supported color, if needed.
-func Bg(c color.Color) string {
-	switch ColorSupport {
-	case NoColorSupport:
-		return ""
-	case Color16Support:
-		return bg16(c)
-	case Color256Support:
-		return bg256(c)
-	case TrueColorSupport:
-		return bg(c)
-	}
-	panic(fmt.Sprint("invalid color support: ", ColorSupport))
 }
