@@ -107,19 +107,11 @@ func Status(address string, proto int32) (status StatusResponse, err error) {
 
 type Icon []byte
 
-func (icon *Icon) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
-		return err
-	}
-	if s == "" {
-		return nil
-	}
-	b = []byte(s)
+func (icon *Icon) UnmarshalText(text []byte) error {
 	// len("data:image/png;base64,") = 22
-	b = b[22:]
-	*icon = make([]byte, len(b))
-	_, err := base64.StdEncoding.Decode(*icon, b)
+	text = text[22:]
+	*icon = make([]byte, len(text))
+	_, err := base64.StdEncoding.Decode(*icon, text)
 	return err
 }
 
