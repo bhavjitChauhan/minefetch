@@ -30,9 +30,10 @@ type QueryResponse struct {
 		Online int
 		Sample []string
 	}
-	Port uint16
-	Ip   net.IP
-	Raw  string
+	Port    uint16
+	Ip      net.IP
+	Latency time.Duration
+	Raw     string
 }
 
 // Query attempts to get general server info using the [query protocol].
@@ -45,14 +46,16 @@ type QueryResponse struct {
 //
 // [query protocol]: https://minecraft.wiki/w/Query
 func Query(address string) (status QueryResponse, err error) {
-	conn, err := net.Dial("udp", address)
+	addr, _ := net.ResolveUDPAddr("udp", address)
+	start := time.Now()
+
+	conn, err := net.Dial("udp", addr.String())
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
 	id := int32(time.Now().Unix()) & 0x0f0f0f0f
-
 	err = writeQueryHandshake(conn, id)
 	if err != nil {
 		return
@@ -62,6 +65,8 @@ func Query(address string) (status QueryResponse, err error) {
 	if err != nil {
 		return
 	}
+
+	status.Latency = time.Since(start)
 
 	err = writeQueryStatus(conn, id, token)
 	if err != nil {
@@ -263,16 +268,17 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 	}
 
 	for {
-		p, err1 := br.ReadString(0)
-		if err = err1; err != nil {
+		var player string
+		player, err = br.ReadString(0)
+		if err != nil {
 			return
 		}
-		if p == string(byte(0)) {
+		if player == string(byte(0)) {
 			break
 		}
 
-		p = p[:len(p)-1]
-		query.Players.Sample = append(query.Players.Sample, p)
+		player = player[:len(player)-1]
+		query.Players.Sample = append(query.Players.Sample, player)
 	}
 
 	return

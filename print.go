@@ -11,6 +11,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -92,6 +93,20 @@ func printMotd(s string) {
 	printLine("MOTD", strings.Join(ss, "\n"))
 }
 
+func printLatency(latency time.Duration) {
+	ms := latency.Milliseconds()
+	var c string
+	switch {
+	case ms < 50:
+		c = ansi.Green
+	case ms < 100:
+		c = ansi.Yellow
+	default:
+		c = ansi.Red
+	}
+	printLine("Ping", fmt.Sprint(c, ms, " ms"))
+}
+
 func printPlayers(online, max int, sample []string) {
 	s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", online, max)
 	for _, v := range sample {
@@ -107,19 +122,7 @@ func printStatus(status *mc.StatusResponse) {
 
 	printMotd(status.Motd.Ansi())
 
-	{
-		ms := status.Latency.Milliseconds()
-		var c string
-		switch {
-		case ms < 50:
-			c = ansi.Green
-		case ms < 100:
-			c = ansi.Yellow
-		default:
-			c = ansi.Red
-		}
-		printLine("Ping", fmt.Sprint(c, ms, " ms"))
-	}
+	printLatency(status.Latency)
 
 	printLine("Version", mc.LegacyTextAnsi(status.Version.Name))
 
@@ -164,6 +167,7 @@ func printStatus(status *mc.StatusResponse) {
 func printBedrock(status mcpe.StatusResponse) {
 	printLine("Name", mcpe.LegacyTextAnsi(status.Name))
 	printLine("Level", mcpe.LegacyTextAnsi(status.Level))
+	printLatency(status.Latency)
 	printLine("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
 	printPlayers(status.Players.Online, status.Players.Max, nil)
 	printLine("Edition", status.Edition)
@@ -174,7 +178,7 @@ func printQuery(query mc.QueryResponse) {
 	prev := lines
 	if !cfg.status {
 		printMotd(mc.LegacyTextAnsi(query.Motd))
-		// TODO: ping
+		printLatency(query.Latency)
 		printLine("Version", mc.LegacyTextAnsi(query.Version))
 		printPlayers(query.Players.Online, query.Players.Max, query.Players.Sample)
 	}

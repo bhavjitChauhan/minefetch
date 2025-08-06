@@ -33,7 +33,8 @@ type StatusResponse struct {
 	Port struct {
 		IPv4, IPv6 uint16
 	}
-	Raw string
+	Latency time.Duration
+	Raw     string
 }
 
 // Status attempts to get general server info using the [RakNet protocol].
@@ -42,8 +43,9 @@ type StatusResponse struct {
 //
 // [RakNet protocol]: https://minecraft.wiki/w/RakNet
 func Status(address string) (status StatusResponse, err error) {
-	udpAddr, _ := net.ResolveUDPAddr("udp", address)
-	conn, err := net.Dial("udp", udpAddr.String())
+	addr, _ := net.ResolveUDPAddr("udp", address)
+	start := time.Now()
+	conn, err := net.Dial("udp", addr.String())
 	if err != nil {
 		return
 	}
@@ -55,6 +57,7 @@ func Status(address string) (status StatusResponse, err error) {
 	if err != nil {
 		return
 	}
+	status.Latency = time.Since(start)
 	return
 }
 
