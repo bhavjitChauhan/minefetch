@@ -30,10 +30,13 @@ type QueryResponse struct {
 		Online int
 		Sample []string
 	}
-	Port    uint16
-	Ip      net.IP
-	Latency time.Duration
-	Raw     string
+	Port uint16
+	Ip   net.IP
+
+	Host      string
+	QueryPort uint16
+	Latency   time.Duration
+	Raw       string
 }
 
 // Query attempts to get general server info using the [query protocol].
@@ -45,7 +48,11 @@ type QueryResponse struct {
 // Query will convert all strings to UTF-8 to support legacy formatting codes.
 //
 // [query protocol]: https://minecraft.wiki/w/Query
-func Query(address string) (status QueryResponse, err error) {
+func Query(address string) (query QueryResponse, err error) {
+	host, port := lookupHostPort(address, 25565)
+	query.Host = host
+	query.QueryPort = port
+	address = JoinHostPort(host, port)
 	addr, _ := net.ResolveUDPAddr("udp", address)
 	start := time.Now()
 
@@ -66,14 +73,14 @@ func Query(address string) (status QueryResponse, err error) {
 		return
 	}
 
-	status.Latency = time.Since(start)
+	query.Latency = time.Since(start)
 
 	err = writeQueryStatus(conn, id, token)
 	if err != nil {
 		return
 	}
 
-	status, err = readQueryStatus(conn, id)
+	query, err = readQueryStatus(conn, id)
 	if err != nil {
 		return
 	}

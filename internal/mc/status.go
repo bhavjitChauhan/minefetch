@@ -44,8 +44,11 @@ type StatusResponse struct {
 	}
 	Icon                Icon `json:"favicon"`
 	PreventsChatReports bool
-	Latency             time.Duration
-	Raw                 string
+
+	Host    string
+	Port    uint16
+	Latency time.Duration
+	Raw     string
 }
 
 // Status attempts to get general server info using the [Server List Ping interface].
@@ -63,11 +66,11 @@ type StatusResponse struct {
 // [Server List Ping interface]: https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // [Copenheimer]: https://2b2t.miraheze.org/wiki/Fifth_Column#Copenheimer
 func Status(address string, proto int32) (status StatusResponse, err error) {
-	host, port, err := SplitHostPort(address)
-	if err != nil {
-		return
-	}
+	host, port := lookupHostPort(address, 25565)
+	status.Host = host
+	status.Port = port
 
+	address = JoinHostPort(host, port)
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return

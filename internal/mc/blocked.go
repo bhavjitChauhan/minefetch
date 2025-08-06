@@ -13,6 +13,7 @@ import (
 //
 // [blocked servers list]: https://github.com/sudofox/mojang-blocklist
 func IsBlocked(host string) (selector string, err error) {
+	host, _ = lookupHostPort(host, 25565)
 	resp, err := http.Get("https://sessionserver.mojang.com/blockedservers")
 	if err != nil {
 		return

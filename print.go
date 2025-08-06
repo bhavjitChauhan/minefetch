@@ -49,28 +49,35 @@ func printTimeout(label string) {
 	printLine(label, ansi.DarkYellow+"Timed out")
 }
 
-func printNetInfo() {
-	ip := cfg.argHost
-	if net.ParseIP(cfg.argHost) == nil {
-		ips, err := net.LookupIP(cfg.host)
+func printNetInfo(host string, port uint16) {
+	var ip string
+	if net.ParseIP(host) == nil {
+		ips, err := net.LookupIP(host)
 		if err == nil {
 			ip = ips[0].String()
 		}
+	} else {
+		ip = host
+		host = ""
 	}
-	if cfg.argHost != ip {
-		printLine("Host", cfg.argHost)
-	}
-	if cfg.host != cfg.argHost {
-		printLine("SRV", cfg.host)
+	if host != "" {
+		printLine("Host", cfg.host)
+		if host != cfg.host {
+			printLine("SRV", host)
+		}
 	}
 	if ip != "" {
 		printLine("IP", ip)
 	}
-	port := cfg.port
+	if port == 0 {
+		port = cfg.port
+	}
 	if cfg.bedrock {
 		port = cfg.bedrockPort
 	}
-	printLine("Port", port)
+	if port != 0 {
+		printLine("Port", port)
+	}
 	if cfg.crossplay {
 		printLine("Bedrock port", cfg.bedrockPort)
 	}
@@ -215,6 +222,8 @@ func printResult[T any](result result, label string, fn func(T), failed string) 
 }
 
 func printResults(results results) {
+	host, port := cfg.host, cfg.port
+
 	if cfg.icon && (!cfg.status || results[resultStatus].err != nil || results[resultStatus].timeout) {
 		printIcon(nil)
 	}
@@ -229,6 +238,7 @@ func printResults(results results) {
 			s = "Java"
 		}
 		printResult(results[resultStatus], s, func(status mc.StatusResponse) {
+			host, port = status.Host, status.Port
 			printStatus(&status)
 		}, ansi.Red+"Offline")
 	}
@@ -239,6 +249,7 @@ func printResults(results results) {
 	}
 	if cfg.bedrock {
 		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
+			port = cfg.bedrockPort
 			printBedrock(status)
 		}, ansi.Red+"Offline")
 	}
@@ -246,6 +257,7 @@ func printResults(results results) {
 	if cfg.query {
 		result := results[resultQuery]
 		printResult(result, "Query", func(query mc.QueryResponse) {
+			port = query.Port
 			printQuery(query)
 		}, ansi.Red+"Disabled")
 	}
@@ -259,7 +271,7 @@ func printResults(results results) {
 		}
 	}
 
-	printNetInfo()
+	printNetInfo(host, port)
 
 	if cfg.blocked {
 		printResult(results[resultBlocked], "Blocked", func(blocked string) {

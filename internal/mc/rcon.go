@@ -17,6 +17,12 @@ import (
 //
 // [remote console]: https://minecraft.wiki/w/RCON
 func IsRconEnabled(address string) (enabled bool, err error) {
+	_, argPort, err := SplitHostPort(address)
+	host, port := lookupHostPort(address, 25575)
+	if err == nil {
+		port = argPort
+	}
+	address = JoinHostPort(host, port)
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return

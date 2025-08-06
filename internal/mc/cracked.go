@@ -19,11 +19,9 @@ import (
 // Note that login attempts are logged in the server console,
 // and operators will see an unexpected disconnect message there.
 func IsCracked(address string, proto int32) (cracked bool, whitelisted bool, err error) {
-	host, port, err := SplitHostPort(address)
-	if err != nil {
-		return
-	}
+	host, port := lookupHostPort(address, 25565)
 
+	address = JoinHostPort(host, port)
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return

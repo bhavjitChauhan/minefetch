@@ -48,25 +48,33 @@ const (
 func startResults(ch chan<- result) {
 	if cfg.status {
 		go func() {
-			status, err := mc.Status(mc.JoinHostPort(cfg.host, cfg.port), cfg.proto)
+			address := cfg.host
+			if cfg.port != 0 {
+				address = mc.JoinHostPort(cfg.host, cfg.port)
+			}
+			status, err := mc.Status(address, cfg.proto)
 			ch <- result{resultStatus, status, err, false}
 		}()
 	}
 
 	if cfg.bedrock || cfg.crossplay {
 		go func() {
-			status, err := mcpe.Status(mc.JoinHostPort(cfg.argHost, cfg.bedrockPort))
+			status, err := mcpe.Status(mc.JoinHostPort(cfg.host, cfg.bedrockPort))
 			ch <- result{resultBedrockStatus, status, err, false}
 		}()
 	}
 
 	if cfg.query {
 		go func() {
+			address := cfg.host
 			queryPort := cfg.queryPort
 			if queryPort == 0 {
 				queryPort = cfg.port
 			}
-			query, err := mc.Query(mc.JoinHostPort(cfg.host, queryPort))
+			if queryPort != 0 {
+				address = mc.JoinHostPort(cfg.host, queryPort)
+			}
+			query, err := mc.Query(address)
 			ch <- result{resultQuery, query, err, false}
 		}()
 	}
@@ -81,7 +89,11 @@ func startResults(ch chan<- result) {
 	if cfg.cracked {
 		go func() {
 			// TODO: use server protocol from status response?
-			cracked, whitelisted, err := mc.IsCracked(mc.JoinHostPort(cfg.host, cfg.port), cfg.proto)
+			address := cfg.host
+			if cfg.port != 0 {
+				address = mc.JoinHostPort(cfg.host, cfg.port)
+			}
+			cracked, whitelisted, err := mc.IsCracked(address, cfg.proto)
 			ch <- result{resultCracked, [2]bool{cracked, whitelisted}, err, false}
 		}()
 	}

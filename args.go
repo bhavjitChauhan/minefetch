@@ -6,10 +6,8 @@ import (
 	"minefetch/internal/ansi"
 	"minefetch/internal/flag"
 	"minefetch/internal/mc"
-	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -34,10 +32,8 @@ var cfg = struct {
 	palette     bool
 	color       string
 	output      string
-	argHost     string
 }{
 	host:        "localhost",
-	port:        25565,
 	status:      true,
 	icon:        true,
 	bedrockPort: 19132,
@@ -73,7 +69,7 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.bedrockPort, "bedrock-port", 0, cfg.bedrockPort, "Bedrock server port.")
 	flag.Var(&cfg.crossplay, "no-crossplay", 0, cfg.crossplay, "Don't check if a Bedrock server is running on the same host.")
 	flag.Var(&cfg.query, "query", 'q', cfg.query, "Get server info using the query protocol.")
-	flag.Var(&cfg.queryPort, "query-port", 0, "port", "Query protocol port.")
+	flag.Var(&cfg.queryPort, "query-port", 0, "auto", "Query protocol port.")
 	flag.Var(&cfg.blocked, "blocked", 0, cfg.blocked, "Check the host against Mojang's blocklist.")
 	flag.Var(&cfg.cracked, "cracked", 'c', cfg.cracked, "Attempt to login using an offline player.")
 	flag.Var(&cfg.rcon, "rcon", 'r', cfg.rcon, "Check if the RCON protocol is enabled.")
@@ -93,6 +89,9 @@ func parseArgs() (err error) {
 
 	if cfg.bedrock {
 		cfg.status = false
+		cfg.query = false
+		cfg.cracked = false
+		cfg.rcon = false
 	}
 
 	if !cfg.status {
@@ -130,15 +129,15 @@ func parseArgs() (err error) {
 	var port uint16
 	switch len(args) {
 	case 0:
-		cfg.argHost = cfg.host
+		// break
 	case 1:
-		cfg.argHost, port, err = mc.SplitHostPort(args[0])
+		cfg.host, port, err = mc.SplitHostPort(args[0])
 		if err != nil {
 			err = nil
-			cfg.argHost = args[0]
+			cfg.host = args[0]
 		}
 	case 2:
-		cfg.argHost = args[0]
+		cfg.host = args[0]
 		port, err = parseUint16(args[1])
 		if err != nil {
 			return
@@ -148,14 +147,6 @@ func parseArgs() (err error) {
 		printHelp()
 	}
 
-	cfg.host = cfg.argHost
-	if !cfg.bedrock && net.ParseIP(cfg.host) == nil {
-		_, addrs, err := net.LookupSRV("minecraft", "tcp", cfg.host)
-		if err == nil && len(addrs) > 0 {
-			cfg.host = strings.TrimSuffix(addrs[0].Target, ".")
-			port = addrs[0].Port
-		}
-	}
 	if port != 0 {
 		cfg.port = port
 		if cfg.bedrock {
