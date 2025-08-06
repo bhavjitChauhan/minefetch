@@ -10,10 +10,7 @@ import (
 )
 
 // Block characters corresponding to 5 levels of transparency.
-//
-// The full block character (█) is not used in favor of setting the background color of a space character.
-// Some terminals (e.g. xterm out of the box) render block characters weird.
-var blocks = [...]rune{' ', '░', '▒', '▓', ' '}
+var blocks = [...]rune{' ', '░', '▒', '▓', '█'}
 
 // BlockPrint prints an image using Unicode shaded block characters (▓, ▒, ░)
 // and ANSI 24-bit foreground and background color escape codes.
@@ -28,6 +25,9 @@ var blocks = [...]rune{' ', '░', '▒', '▓', ' '}
 // Transparency is supported by mapping the alpha channel to the 5 levels,
 // from fully transparent to opaque, corresponding to a space character with no background color,
 // shaded block characters and a space character with a colored background.
+//
+// The full block character (█) is not used in favor of setting the background color of a space character.
+// Some terminals (e.g. xterm out of the box) render block characters weird.
 func BlockPrint(img image.Image, square bool) {
 	var b strings.Builder
 	bounds := img.Bounds()
@@ -39,22 +39,26 @@ func BlockPrint(img image.Image, square bool) {
 			if level == 5 {
 				level--
 			}
-			switch {
-			case level == 0:
+			switch level {
+			case 0:
 				b.WriteString(ansi.ResetBg)
 				b.WriteRune(' ')
-			case level < uint8(len(blocks))-1:
-				b.WriteString(ansi.Color(c))
-				b.WriteRune(blocks[level])
-			default:
+			case 4:
 				b.WriteString(ansi.Bg(c))
 				b.WriteRune(' ')
+			default:
+				b.WriteString(ansi.Color(c))
+				b.WriteRune(blocks[level])
 			}
 			if square {
+				if level == 4 {
+					b.WriteRune(' ')
+					continue
+				}
 				b.WriteRune(blocks[level])
 			}
 		}
-		// It's blockPrint, not blockPrintln
+		// It's BlockPrint, not BlockPrintln
 		if y != bounds.Max.Y-1 {
 			b.WriteString(ansi.ResetBg)
 			b.WriteRune('\n')
