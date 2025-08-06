@@ -33,6 +33,7 @@ var cfg = struct {
 	rconPort    uint16
 	palette     bool
 	color       string
+	output      string
 	argHost     string
 }{
 	host:        "localhost",
@@ -46,6 +47,7 @@ var cfg = struct {
 	rconPort:    25575,
 	palette:     true,
 	color:       "auto",
+	output:      "print",
 }
 
 func printHelp() {
@@ -78,6 +80,7 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.rconPort, "rcon-port", 0, cfg.rconPort, "RCON protocol port.")
 	flag.Var(&cfg.palette, "no-palette", 0, cfg.palette, "Print Minecraft's formatting code colors.")
 	flag.Var(&cfg.color, "color", 0, cfg.color, "Override terminal color support detection. (0, 16, 256, true)")
+	flag.Var(&cfg.output, "output", 'o', cfg.output, "Output format. (print, raw)")
 
 	args, err := flag.Parse()
 	if err != nil {

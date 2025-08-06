@@ -45,6 +45,7 @@ type StatusResponse struct {
 	Icon                Icon `json:"favicon"`
 	PreventsChatReports bool
 	Latency             time.Duration
+	Raw                 string
 }
 
 // Status attempts to get general server info using the [Server List Ping interface].
@@ -140,6 +141,8 @@ func readStatusResponse(r io.Reader, status *StatusResponse) error {
 	if err != nil {
 		return errors.New("failed to read string: " + err.Error())
 	}
+
+	status.Raw = s
 
 	err = json.Unmarshal([]byte(s), &status)
 	if err != nil {

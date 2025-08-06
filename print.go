@@ -14,27 +14,9 @@ import (
 	"unicode/utf8"
 )
 
-const (
-	resultStatus = iota
-	resultBedrockStatus
-	resultQuery
-	resultBlocked
-	resultCracked
-	resultRcon
-)
-
-type results [6]result
-
 const padding = 2
 
 var lines = 0
-
-type result struct {
-	i       int
-	v       any
-	err     error
-	timeout bool
-}
 
 func printData(label string, data any) {
 	ss := strings.Split(fmt.Sprint(data), "\n")

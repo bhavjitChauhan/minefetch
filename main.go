@@ -19,8 +19,31 @@ func main() {
 	timeout := time.After(cfg.timeout)
 	startResults(ch)
 	results := collectResults(ch, timeout)
-	printResults(results)
+	switch cfg.output {
+	case "print":
+		printResults(results)
+	case "raw":
+		printRawResults(results)
+	}
 }
+
+type result struct {
+	i       int
+	v       any
+	err     error
+	timeout bool
+}
+
+type results [6]result
+
+const (
+	resultStatus = iota
+	resultBedrockStatus
+	resultQuery
+	resultBlocked
+	resultCracked
+	resultRcon
+)
 
 func startResults(ch chan<- result) {
 	if cfg.status {

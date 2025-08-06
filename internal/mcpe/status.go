@@ -33,6 +33,7 @@ type StatusResponse struct {
 	Port struct {
 		IPv4, IPv6 uint16
 	}
+	Raw string
 }
 
 // Status attempts to get general server info using the [RakNet protocol].
@@ -91,6 +92,7 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	if err != nil {
 		return
 	}
+	status.Raw = string(b)
 	if len(b) == 0 {
 		err = errors.New("zero-length response")
 		return

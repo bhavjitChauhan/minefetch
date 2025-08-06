@@ -32,6 +32,7 @@ type QueryResponse struct {
 	}
 	Port uint16
 	Ip   net.IP
+	Raw  string
 }
 
 // Query attempts to get general server info using the [query protocol].
@@ -176,6 +177,12 @@ func readQueryStatus(r io.Reader, id int32) (query QueryResponse, err error) {
 		err = fmt.Errorf("expected 11 bytes, got: %v", n)
 		return
 	}
+
+	b, err := br.Peek(br.Buffered())
+	if err != nil {
+		return
+	}
+	query.Raw = string(b)
 
 	for {
 		var k string
