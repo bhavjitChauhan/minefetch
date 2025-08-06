@@ -224,7 +224,11 @@ func printResults(results results) {
 		if result.err != nil || result.timeout {
 			cfg.status = false
 		}
-		printResult(results[resultStatus], "Java", func(status mc.StatusResponse) {
+		s := "Status"
+		if results[resultBedrockStatus].v != nil {
+			s = "Java"
+		}
+		printResult(results[resultStatus], s, func(status mc.StatusResponse) {
 			printStatus(&status)
 		}, ansi.Red+"Offline")
 	}
