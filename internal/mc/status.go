@@ -109,6 +109,9 @@ func Status(address string, proto int32) (status StatusResponse, err error) {
 type Icon []byte
 
 func (icon *Icon) UnmarshalText(text []byte) error {
+	if len(text) == 0 {
+		return nil
+	}
 	// len("data:image/png;base64,") = 22
 	text = text[22:]
 	*icon = make([]byte, len(text))
