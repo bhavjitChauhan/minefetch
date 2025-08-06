@@ -18,7 +18,7 @@ const padding = 2
 
 var lines = 0
 
-func printData(label string, data any) {
+func printLine(label string, data any) {
 	ss := strings.Split(fmt.Sprint(data), "\n")
 	if cfg.icon {
 		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
@@ -41,11 +41,11 @@ func printData(label string, data any) {
 }
 
 func printErr(label string, err error) {
-	printData(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
+	printLine(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
 }
 
 func printTimeout(label string) {
-	printData(label, ansi.DarkYellow+"Timed out")
+	printLine(label, ansi.DarkYellow+"Timed out")
 }
 
 func printNetInfo() {
@@ -57,21 +57,21 @@ func printNetInfo() {
 		}
 	}
 	if cfg.argHost != ip {
-		printData("Host", cfg.argHost)
+		printLine("Host", cfg.argHost)
 	}
 	if cfg.host != cfg.argHost {
-		printData("SRV", cfg.host)
+		printLine("SRV", cfg.host)
 	}
 	if ip != "" {
-		printData("IP", ip)
+		printLine("IP", ip)
 	}
 	port := cfg.port
 	if cfg.bedrock {
 		port = cfg.bedrockPort
 	}
-	printData("Port", port)
+	printLine("Port", port)
 	if cfg.crossplay {
-		printData("Bedrock port", cfg.bedrockPort)
+		printLine("Bedrock port", cfg.bedrockPort)
 	}
 }
 
@@ -89,7 +89,7 @@ func printMotd(s string) {
 		j := (i + 1) % 2
 		ss[i] = strings.Repeat(" ", (n[j]-n[i])/2) + ss[i]
 	}
-	printData("MOTD", strings.Join(ss, "\n"))
+	printLine("MOTD", strings.Join(ss, "\n"))
 }
 
 func printPlayers(online, max int, sample []string) {
@@ -97,7 +97,7 @@ func printPlayers(online, max int, sample []string) {
 	for _, v := range sample {
 		s += "\n" + mc.LegacyTextAnsi(v)
 	}
-	printData("Players", s)
+	printLine("Players", s)
 }
 
 func printStatus(status *mc.StatusResponse) {
@@ -118,10 +118,10 @@ func printStatus(status *mc.StatusResponse) {
 		default:
 			c = ansi.Red
 		}
-		printData("Ping", fmt.Sprint(c, ms, " ms"))
+		printLine("Ping", fmt.Sprint(c, ms, " ms"))
 	}
 
-	printData("Version", mc.LegacyTextAnsi(status.Version.Name))
+	printLine("Version", mc.LegacyTextAnsi(status.Version.Name))
 
 	{
 		var sample []string
@@ -139,7 +139,7 @@ func printStatus(status *mc.StatusResponse) {
 		} else {
 			s = strconv.Itoa(int(status.Version.Protocol))
 		}
-		printData("Protocol", s)
+		printLine("Protocol", s)
 	}
 
 	if status.Icon != nil {
@@ -148,26 +148,26 @@ func printStatus(status *mc.StatusResponse) {
 		if iconConfig.Interlaced {
 			interlaced = "Interlaced "
 		}
-		printData("Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, formatColorType(iconConfig.ColorType)))
+		printLine("Icon", fmt.Sprintf("%v%v-bit %v", interlaced, iconConfig.BitDepth, formatColorType(iconConfig.ColorType)))
 	} else {
-		printData("Icon", "Default")
+		printLine("Icon", "Default")
 	}
 
-	printData("Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced"))
+	printLine("Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced"))
 
 	if status.PreventsChatReports {
-		printData("Prevents chat reports", ansi.Green+"Yes")
+		printLine("Prevents chat reports", ansi.Green+"Yes")
 
 	}
 }
 
 func printBedrock(status mcpe.StatusResponse) {
-	printData("Name", mcpe.LegacyTextAnsi(status.Name))
-	printData("Level", mcpe.LegacyTextAnsi(status.Level))
-	printData("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
+	printLine("Name", mcpe.LegacyTextAnsi(status.Name))
+	printLine("Level", mcpe.LegacyTextAnsi(status.Level))
+	printLine("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
 	printPlayers(status.Players.Online, status.Players.Max, nil)
-	printData("Edition", status.Edition)
-	printData("Game Mode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.GameMode.Name, status.GameMode.ID))
+	printLine("Edition", status.Edition)
+	printLine("Game Mode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.GameMode.Name, status.GameMode.ID))
 }
 
 func printQuery(query mc.QueryResponse) {
@@ -175,17 +175,17 @@ func printQuery(query mc.QueryResponse) {
 	if !cfg.status {
 		printMotd(mc.LegacyTextAnsi(query.Motd))
 		// TODO: ping
-		printData("Version", mc.LegacyTextAnsi(query.Version))
+		printLine("Version", mc.LegacyTextAnsi(query.Version))
 		printPlayers(query.Players.Online, query.Players.Max, query.Players.Sample)
 	}
 	if query.Software != "" {
-		printData("Software", query.Software)
+		printLine("Software", query.Software)
 	}
 	if len(query.Plugins) > 0 {
-		printData("Plugins", strings.Join(query.Plugins, "\n"))
+		printLine("Plugins", strings.Join(query.Plugins, "\n"))
 	}
 	if lines == prev {
-		printData("Query", ansi.Green+"Enabled")
+		printLine("Query", ansi.Green+"Enabled")
 	}
 }
 
@@ -199,7 +199,7 @@ func printResult[T any](result result, label string, fn func(T), failed string) 
 		fn(v)
 	case result.err != nil, result.timeout:
 		if failed != "" {
-			printData(label, failed)
+			printLine(label, failed)
 		} else if result.timeout {
 			printTimeout(label)
 		} else {
@@ -244,7 +244,7 @@ func printResults(results results) {
 
 	if cfg.crossplay {
 		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
-			printData("Crossplay", ansi.Green+"Yes")
+			printLine("Crossplay", ansi.Green+"Yes")
 		}, ansi.Red+"No")
 		if results[resultBedrockStatus].v == nil {
 			cfg.crossplay = false
@@ -255,22 +255,22 @@ func printResults(results results) {
 
 	if cfg.blocked {
 		printResult(results[resultBlocked], "Blocked", func(blocked string) {
-			printData("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
+			printLine("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
 		}, "")
 	}
 
 	if cfg.cracked {
 		printResult(results[resultCracked], "Cracked", func(crackedWhitelisted [2]bool) {
-			printData("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
+			printLine("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
 			if crackedWhitelisted[0] {
-				printData("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
+				printLine("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
 			}
 		}, "")
 	}
 
 	if cfg.rcon {
 		printResult(results[resultRcon], "RCON", func(enabled bool) {
-			printData("RCON", formatBool(!enabled, "Disabled", "Enabled"))
+			printLine("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		}, "")
 	}
 
