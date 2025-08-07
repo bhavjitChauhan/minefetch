@@ -122,7 +122,6 @@ func parseArgs() (err error) {
 	}
 	if ansi.ColorSupport == ansi.NoColorSupport {
 		ansi.NoColor()
-		cfg.icon = false
 		cfg.palette = false
 	}
 

@@ -9,6 +9,56 @@ import (
 	"strings"
 )
 
+// HalfPrint prints an image using a combination of Unicode upper and lower half block characters (▀, ▄)
+// and ANSI 24-bit color foreground and background escape codes.
+//
+// Terminal fonts typically have an approximate aspect ratio of 1:2,
+// i.e. pixels will be twice as tall as they are wide,
+// so this method should reverse that effect and print close to a square aspect ratio.
+//
+// There are no shaded variants of these half block characters,
+// so transparency support is limited to a threshold value.
+// This value determines whether the half part of the the character corresponding to the pixel is drawn or not,
+// i.e. 2 levels of transparency.
+//
+// This method was inspired by [catimg] and [pixterm].
+//
+// [catimg]: https://github.com/posva/catimg
+// [pixterm]: https://github.com/eliukblau/pixterm
+func HalfPrint(img image.Image, thresh uint8) {
+	var b strings.Builder
+	bounds := img.Bounds()
+	for y := bounds.Min.Y; y < bounds.Max.Y; y += 2 {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c0 := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
+			c1 := color.NRGBAModel.Convert(img.At(x, y+1)).(color.NRGBA)
+			// Background color is only used if both pixels satisfy the alpha threshold
+			if c0.A >= thresh && c1.A >= thresh {
+				b.WriteString(ansi.Bg(c0))
+				b.WriteString(ansi.Color(c1))
+				b.WriteRune('▄')
+			} else if c0.A >= thresh {
+				b.WriteString(ansi.ResetBg)
+				b.WriteString(ansi.Color(c0))
+				b.WriteRune('▀')
+			} else if c1.A >= thresh {
+				b.WriteString(ansi.ResetBg)
+				b.WriteString(ansi.Color(c1))
+				b.WriteRune('▄')
+			} else {
+				b.WriteString(ansi.ResetBg)
+				b.WriteRune(' ')
+			}
+		}
+		if y+2 < bounds.Max.Y {
+			b.WriteString(ansi.ResetBg)
+			b.WriteRune('\n')
+		}
+	}
+	b.WriteString(ansi.Reset)
+	fmt.Print(b.String())
+}
+
 // Block characters corresponding to 5 levels of transparency.
 var blocks = [...]rune{' ', '░', '▒', '▓', '█'}
 
@@ -68,52 +118,30 @@ func BlockPrint(img image.Image, square bool) {
 	fmt.Print(b.String())
 }
 
-// HalfPrint prints an image using a combination of Unicode upper and lower half block characters (▀, ▄)
-// and ANSI 24-bit color foreground and background escape codes.
+// ShadePrint prints an image using Unicode shaded block characters.
 //
-// Terminal fonts typically have an approximate aspect ratio of 1:2,
-// i.e. pixels will be twice as tall as they are wide,
-// so this method should reverse that effect and print close to a square aspect ratio.
+// It is intended for settings with no terminal color support.
 //
-// There are no shaded variants of these half block characters,
-// so transparency support is limited to a threshold value.
-// This value determines whether the half part of the the character corresponding to the pixel is drawn or not,
-// i.e. 2 levels of transparency.
-//
-// This method was inspired by [catimg] and [pixterm].
-//
-// [catimg]: https://github.com/posva/catimg
-// [pixterm]: https://github.com/eliukblau/pixterm
-func HalfPrint(img image.Image, thresh uint8) {
+// See the comment on BlockPrint for more information.
+func ShadePrint(img image.Image, square bool) {
 	var b strings.Builder
 	bounds := img.Bounds()
-	for y := bounds.Min.Y; y < bounds.Max.Y; y += 2 {
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			c0 := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
-			c1 := color.NRGBAModel.Convert(img.At(x, y+1)).(color.NRGBA)
-			// Background color is only used if both pixels satisfy the alpha threshold
-			if c0.A >= thresh && c1.A >= thresh {
-				b.WriteString(ansi.Bg(c0))
-				b.WriteString(ansi.Color(c1))
-				b.WriteRune('▄')
-			} else if c0.A >= thresh {
-				b.WriteString(ansi.ResetBg)
-				b.WriteString(ansi.Color(c0))
-				b.WriteRune('▀')
-			} else if c1.A >= thresh {
-				b.WriteString(ansi.ResetBg)
-				b.WriteString(ansi.Color(c1))
-				b.WriteRune('▄')
-			} else {
-				b.WriteString(ansi.ResetBg)
-				b.WriteRune(' ')
+			c := color.GrayModel.Convert(img.At(x, y)).(color.Gray)
+			// https://pkg.go.dev/image/png#example-Decode
+			level := c.Y / 51 // 51 * 5 = 255
+			if level == 5 {
+				level--
+			}
+			b.WriteRune(blocks[level])
+			if square {
+				b.WriteRune(blocks[level])
 			}
 		}
-		if y+2 < bounds.Max.Y {
-			b.WriteString(ansi.ResetBg)
+		if y != bounds.Max.Y-1 {
 			b.WriteRune('\n')
 		}
 	}
-	b.WriteString(ansi.Reset)
 	fmt.Print(b.String())
 }

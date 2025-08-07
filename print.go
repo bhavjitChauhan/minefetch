@@ -30,7 +30,7 @@ func printLine(label string, data any) {
 	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + ss[0])
 	for _, v := range ss[1:] {
 		fwd := uint(len(label)) + 2
-		if cfg.icon {
+		if cfg.icon && ansi.ColorSupport != ansi.NoColorSupport {
 			fwd += cfg.iconSize + padding
 			fmt.Println(ansi.Fwd(fwd) + v)
 		} else {
@@ -298,7 +298,7 @@ func printResults(results results) {
 		printPalette()
 	}
 
-	if cfg.icon && lines < int(iconHeight())+1 {
+	if cfg.icon && ansi.ColorSupport != ansi.NoColorSupport && lines < int(iconHeight())+1 {
 		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
 	} else {
 		fmt.Print("\n")

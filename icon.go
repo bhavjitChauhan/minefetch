@@ -35,9 +35,17 @@ func printIcon(b []byte) {
 	}
 
 	f := float64(cfg.iconSize) / float64(img.Bounds().Dy())
+	if ansi.ColorSupport == ansi.NoColorSupport {
+		f /= 2
+	}
 	if f != 1 {
 		img = scale.Lanczos(img, f)
 	}
-	print.HalfPrint(img, 255/2)
-	fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
+	if ansi.ColorSupport != ansi.NoColorSupport {
+		print.HalfPrint(img, 255/2)
+		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
+	} else {
+		print.ShadePrint(img, true)
+		fmt.Println()
+	}
 }
