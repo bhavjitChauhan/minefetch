@@ -19,6 +19,7 @@ var cfg = struct {
 	timeout     time.Duration
 	status      bool
 	icon        bool
+	iconType    string
 	iconSize    uint
 	bedrock     bool
 	bedrockPort uint16
@@ -64,6 +65,7 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
 	flag.Var(&cfg.status, "no-status", 0, cfg.status, "Don't get server info using the Server List Ping interface.")
 	flag.Var(&cfg.icon, "no-icon", 0, cfg.icon, "Don't print the server icon.")
+	flag.Var(&cfg.iconType, "icon", 0, "auto", "Icon print format. (sixel, half)")
 	flag.Var(&cfg.iconSize, "icon-size", 0, cfg.iconSize, "Icon size in pixels.")
 	flag.Var(&cfg.bedrock, "bedrock", 'b', cfg.bedrock, "Get Bedrock server info.")
 	flag.Var(&cfg.bedrockPort, "bedrock-port", 0, cfg.bedrockPort, "Bedrock server port.")
@@ -123,6 +125,18 @@ func parseArgs() (err error) {
 	if ansi.ColorSupport == ansi.NoColorSupport {
 		ansi.NoColor()
 		cfg.palette = false
+	}
+
+	if cfg.iconType != "" {
+		if cfg.iconType != "sixel" && cfg.iconType != "half" {
+			return fmt.Errorf("invalid icon type: %v", cfg.iconType)
+		}
+	} else {
+		if ansi.ColorSupport != ansi.NoColorSupport {
+			cfg.iconType = "half"
+		} else {
+			cfg.iconType = "shade"
+		}
 	}
 
 	var port uint16

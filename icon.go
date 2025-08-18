@@ -10,6 +10,9 @@ import (
 	"minefetch/internal/ansi"
 	"minefetch/internal/image/print"
 	"minefetch/internal/image/scale"
+	"minefetch/internal/image/sixel"
+	"minefetch/internal/term"
+	"os"
 )
 
 const iconAspectRatio = 0.5
@@ -34,17 +37,29 @@ func printIcon(b []byte) {
 		}
 	}
 
-	f := float64(cfg.iconSize) / float64(img.Bounds().Dy())
-	if ansi.ColorSupport == ansi.NoColorSupport {
-		f /= 2
-	}
-	if f != 1 {
-		img = scale.Lanczos(img, f)
-	}
-	if ansi.ColorSupport != ansi.NoColorSupport {
+	switch cfg.iconType {
+	case "sixel":
+		cellWidth, cellHeight, _ := term.QueryCellSize()
+		if cellWidth == 0 || cellHeight == 0 {
+			log.Fatalln("Failed to get cell size")
+		}
+		img = scale.NearestNeighbor(img, cfg.iconSize*cellWidth, iconHeight()*cellHeight)
+		sixel.Encode(os.Stdout, img, nil)
+		// Some terminals print a newline after sixel images, some don't
+		// fmt.Println()
+		fmt.Print(ansi.Up(iconHeight()) + ansi.Back(cfg.iconSize))
+	case "half":
+		f := float64(cfg.iconSize) / float64(img.Bounds().Dx())
+		if f != 1 {
+			img = scale.Lanczos(img, f)
+		}
 		print.HalfPrint(img, 255/2)
 		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
-	} else {
+	case "shade":
+		f := float64(cfg.iconSize) / float64(img.Bounds().Dx()) / 2
+		if f != 1 {
+			img = scale.Lanczos(img, f)
+		}
 		print.ShadePrint(img, true)
 		fmt.Println()
 	}
