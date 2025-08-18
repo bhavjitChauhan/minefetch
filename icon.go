@@ -7,7 +7,6 @@ import (
 	"image"
 	"image/png"
 	"log"
-	"minefetch/internal/ansi"
 	"minefetch/internal/image/print"
 	"minefetch/internal/image/scale"
 	"minefetch/internal/image/sixel"
@@ -47,14 +46,14 @@ func printIcon(b []byte) {
 		sixel.Encode(os.Stdout, img, nil)
 		// Some terminals print a newline after sixel images, some don't
 		// fmt.Println()
-		fmt.Print(ansi.Up(iconHeight()) + ansi.Back(cfg.iconSize))
+		fmt.Print(term.Up(iconHeight()) + term.Back(cfg.iconSize))
 	case "half":
 		f := float64(cfg.iconSize) / float64(img.Bounds().Dx())
 		if f != 1 {
 			img = scale.Lanczos(img, f)
 		}
 		print.HalfPrint(img, 255/2)
-		fmt.Print(ansi.Up(iconHeight()-1) + ansi.Back(cfg.iconSize))
+		fmt.Print(term.Up(iconHeight()-1) + term.Back(cfg.iconSize))
 	case "shade":
 		f := float64(cfg.iconSize) / float64(img.Bounds().Dx()) / 2
 		if f != 1 {

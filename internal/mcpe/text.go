@@ -2,7 +2,7 @@ package mcpe
 
 import (
 	"image/color"
-	"minefetch/internal/ansi"
+	"minefetch/internal/term"
 	"strconv"
 	"strings"
 )
@@ -29,20 +29,20 @@ func LegacyTextAnsi(s string) string {
 
 		switch v {
 		case 'k':
-			b.WriteString(ansi.Invert)
+			b.WriteString(term.Invert)
 		case 'l':
-			b.WriteString(ansi.Bold)
+			b.WriteString(term.Bold)
 		case 'o':
-			b.WriteString(ansi.Italic)
+			b.WriteString(term.Italic)
 		case 'r':
-			b.WriteString(ansi.Reset)
+			b.WriteString(term.Reset)
 		default:
 			if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'v') {
-				b.WriteString(ansi.Color(ParseColor(v)))
+				b.WriteString(term.Color(ParseColor(v)))
 			}
 		}
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	return b.String()
 }
 

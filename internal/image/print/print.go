@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"minefetch/internal/ansi"
+	"minefetch/internal/term"
 	"strings"
 )
 
@@ -34,28 +34,28 @@ func HalfPrint(img image.Image, thresh uint8) {
 			c1 := color.NRGBAModel.Convert(img.At(x, y+1)).(color.NRGBA)
 			// Background color is only used if both pixels satisfy the alpha threshold
 			if c0.A >= thresh && c1.A >= thresh {
-				b.WriteString(ansi.Bg(c0))
-				b.WriteString(ansi.Color(c1))
+				b.WriteString(term.Bg(c0))
+				b.WriteString(term.Color(c1))
 				b.WriteRune('▄')
 			} else if c0.A >= thresh {
-				b.WriteString(ansi.ResetBg)
-				b.WriteString(ansi.Color(c0))
+				b.WriteString(term.ResetBg)
+				b.WriteString(term.Color(c0))
 				b.WriteRune('▀')
 			} else if c1.A >= thresh {
-				b.WriteString(ansi.ResetBg)
-				b.WriteString(ansi.Color(c1))
+				b.WriteString(term.ResetBg)
+				b.WriteString(term.Color(c1))
 				b.WriteRune('▄')
 			} else {
-				b.WriteString(ansi.ResetBg)
+				b.WriteString(term.ResetBg)
 				b.WriteRune(' ')
 			}
 		}
 		if y+2 < bounds.Max.Y {
-			b.WriteString(ansi.ResetBg)
+			b.WriteString(term.ResetBg)
 			b.WriteRune('\n')
 		}
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	fmt.Print(b.String())
 }
 
@@ -91,13 +91,13 @@ func BlockPrint(img image.Image, square bool) {
 			}
 			switch level {
 			case 0:
-				b.WriteString(ansi.ResetBg)
+				b.WriteString(term.ResetBg)
 				b.WriteRune(' ')
 			case 4:
-				b.WriteString(ansi.Bg(c))
+				b.WriteString(term.Bg(c))
 				b.WriteRune(' ')
 			default:
-				b.WriteString(ansi.Color(c))
+				b.WriteString(term.Color(c))
 				b.WriteRune(blocks[level])
 			}
 			if square {
@@ -110,11 +110,11 @@ func BlockPrint(img image.Image, square bool) {
 		}
 		// It's BlockPrint, not BlockPrintln
 		if y != bounds.Max.Y-1 {
-			b.WriteString(ansi.ResetBg)
+			b.WriteString(term.ResetBg)
 			b.WriteRune('\n')
 		}
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	fmt.Print(b.String())
 }
 

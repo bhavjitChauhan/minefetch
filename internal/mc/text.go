@@ -3,8 +3,8 @@ package mc
 import (
 	"encoding/json"
 	"image/color"
-	"minefetch/internal/ansi"
 	"minefetch/internal/emoji"
+	"minefetch/internal/term"
 	"strconv"
 	"strings"
 )
@@ -36,27 +36,27 @@ func (t Text) Raw() string {
 // Ansi returns a representation of t using ANSI escape codes.
 func (t Text) Ansi() string {
 	var b strings.Builder
-	b.WriteString(ansi.Color(t.Color))
+	b.WriteString(term.Color(t.Color))
 	if t.Bold {
-		b.WriteString(ansi.Bold)
+		b.WriteString(term.Bold)
 	}
 	if t.Italic {
-		b.WriteString(ansi.Italic)
+		b.WriteString(term.Italic)
 	}
 	if t.Underlined {
-		b.WriteString(ansi.Underline)
+		b.WriteString(term.Underline)
 	}
 	if t.Strikethrough {
-		b.WriteString(ansi.Strike)
+		b.WriteString(term.Strike)
 	}
 	if t.Obfuscated {
-		b.WriteString(ansi.Invert)
+		b.WriteString(term.Invert)
 	}
 	b.WriteString(LegacyTextAnsi(emoji.ReplaceColored(t.Text)))
 	for _, t = range t.Extra {
 		b.WriteString(t.Ansi())
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	return b.String()
 }
 
@@ -145,25 +145,25 @@ func LegacyTextAnsi(s string) string {
 
 		switch v {
 		case 'k':
-			b.WriteString(ansi.Invert)
+			b.WriteString(term.Invert)
 		case 'l':
-			b.WriteString(ansi.Bold)
+			b.WriteString(term.Bold)
 		case 'm':
-			b.WriteString(ansi.Strike)
+			b.WriteString(term.Strike)
 		case 'n':
-			b.WriteString(ansi.Underline)
+			b.WriteString(term.Underline)
 		case 'o':
-			b.WriteString(ansi.Italic)
+			b.WriteString(term.Italic)
 		case 'r':
-			b.WriteString(ansi.Reset)
+			b.WriteString(term.Reset)
 		default:
 			if (v >= '0' && v <= '9') || (v >= 'a' && v <= 'f') {
-				b.WriteString(ansi.Reset)
-				b.WriteString(ansi.Color(ParseColor(v)))
+				b.WriteString(term.Reset)
+				b.WriteString(term.Color(ParseColor(v)))
 			}
 		}
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	return b.String()
 }
 

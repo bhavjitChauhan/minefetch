@@ -5,7 +5,7 @@ Virtually every modern terminal emulator supports these sequences.
 
 [ANSI escape sequences]: https://en.wikipedia.org/wiki/ANSI_escape_code
 */
-package ansi
+package term
 
 import "strconv"
 

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"minefetch/internal/ansi"
 	"minefetch/internal/flag"
 	"minefetch/internal/mc"
+	"minefetch/internal/term"
 	"os"
 	"strconv"
 	"time"
@@ -103,27 +103,27 @@ func parseArgs() (err error) {
 	if cfg.color != "auto" {
 		switch cfg.color {
 		case "0":
-			ansi.ColorSupport = ansi.NoColorSupport
+			term.ColorSupport = term.NoColorSupport
 		case "16":
-			ansi.ColorSupport = ansi.Color16Support
+			term.ColorSupport = term.Color16Support
 		case "256":
-			ansi.ColorSupport = ansi.Color256Support
+			term.ColorSupport = term.Color256Support
 		// https://github.com/chalk/supports-color/blob/ae809ecabd5965d0685e7fc121efe98c47ad8724/index.js#L85-L87
 		case "true", "16m", "full", "truecolor":
-			ansi.ColorSupport = ansi.TrueColorSupport
+			term.ColorSupport = term.TrueColorSupport
 		// https://bixense.com/clicolors
 		case "", "always", "on":
-			if ansi.ColorSupport == ansi.NoColorSupport {
-				ansi.ColorSupport = ansi.Color16Support
+			if term.ColorSupport == term.NoColorSupport {
+				term.ColorSupport = term.Color16Support
 			}
 		case "never", "no":
-			ansi.ColorSupport = ansi.NoColorSupport
+			term.ColorSupport = term.NoColorSupport
 		default:
 			return fmt.Errorf("invalid colors: %v", cfg.color)
 		}
 	}
-	if ansi.ColorSupport == ansi.NoColorSupport {
-		ansi.NoColor()
+	if term.ColorSupport == term.NoColorSupport {
+		term.NoColor()
 		cfg.palette = false
 	}
 
@@ -132,7 +132,7 @@ func parseArgs() (err error) {
 			return fmt.Errorf("invalid icon type: %v", cfg.iconType)
 		}
 	} else {
-		if ansi.ColorSupport != ansi.NoColorSupport {
+		if term.ColorSupport != term.NoColorSupport {
 			cfg.iconType = "half"
 		} else {
 			cfg.iconType = "shade"

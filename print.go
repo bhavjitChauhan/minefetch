@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"minefetch/internal/ansi"
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
 	"minefetch/internal/mcpe"
+	"minefetch/internal/term"
 	"net"
 	"strconv"
 	"strings"
@@ -22,31 +22,31 @@ var lines = 0
 func printLine(label string, data any) {
 	ss := strings.Split(fmt.Sprint(data), "\n")
 	if cfg.icon {
-		fmt.Print(ansi.Fwd(cfg.iconSize + padding))
+		fmt.Print(term.Fwd(cfg.iconSize + padding))
 	}
-	if len(ss) == 1 && ansi.RemoveCsi(ss[0]) == "" {
-		ss[0] = ansi.Gray + "(empty)"
+	if len(ss) == 1 && term.RemoveCsi(ss[0]) == "" {
+		ss[0] = term.Gray + "(empty)"
 	}
-	fmt.Println(ansi.Bold + ansi.Blue + label + ansi.Reset + ": " + ss[0])
+	fmt.Println(term.Bold + term.Blue + label + term.Reset + ": " + ss[0])
 	for _, v := range ss[1:] {
 		fwd := uint(len(label)) + 2
-		if cfg.icon && ansi.ColorSupport != ansi.NoColorSupport {
+		if cfg.icon && term.ColorSupport != term.NoColorSupport {
 			fwd += cfg.iconSize + padding
-			fmt.Println(ansi.Fwd(fwd) + v)
+			fmt.Println(term.Fwd(fwd) + v)
 		} else {
 			fmt.Println(strings.Repeat(" ", int(fwd)) + v)
 		}
 	}
-	fmt.Print(ansi.Reset)
+	fmt.Print(term.Reset)
 	lines += len(ss)
 }
 
 func printErr(label string, err error) {
-	printLine(label, ansi.DarkYellow+"Failed "+ansi.Gray+"("+err.Error()+ansi.Gray+")")
+	printLine(label, term.DarkYellow+"Failed "+term.Gray+"("+err.Error()+term.Gray+")")
 }
 
 func printTimeout(label string) {
-	printLine(label, ansi.DarkYellow+"Timed out")
+	printLine(label, term.DarkYellow+"Timed out")
 }
 
 func printNetInfo(host string, port uint16) {
@@ -86,10 +86,10 @@ func printNetInfo(host string, port uint16) {
 func printMotd(s string) {
 	ss := strings.Split(s, "\n")
 	for i, s := range ss {
-		ss[i] = ansi.TrimSpace(s)
+		ss[i] = term.TrimSpace(s)
 	}
 	if len(ss) > 1 {
-		n := [2]int{utf8.RuneCountInString(ansi.RemoveCsi(ss[0])), utf8.RuneCountInString(ansi.RemoveCsi(ss[1]))}
+		n := [2]int{utf8.RuneCountInString(term.RemoveCsi(ss[0])), utf8.RuneCountInString(term.RemoveCsi(ss[1]))}
 		i := 0
 		if n[1] < n[0] {
 			i = 1
@@ -105,17 +105,17 @@ func printLatency(latency time.Duration) {
 	var c string
 	switch {
 	case ms < 50:
-		c = ansi.Green
+		c = term.Green
 	case ms < 100:
-		c = ansi.Yellow
+		c = term.Yellow
 	default:
-		c = ansi.Red
+		c = term.Red
 	}
 	printLine("Ping", fmt.Sprint(c, ms, " ms"))
 }
 
 func printPlayers(online, max int, sample []string) {
-	s := fmt.Sprintf("%v"+ansi.Gray+"/"+ansi.Reset+"%v", online, max)
+	s := fmt.Sprintf("%v"+term.Gray+"/"+term.Reset+"%v", online, max)
 	for _, v := range sample {
 		s += "\n" + mc.LegacyTextAnsi(v)
 	}
@@ -145,7 +145,7 @@ func printStatus(status *mc.StatusResponse) {
 		var s string
 		protoVerName, ok := mc.VersionIdName[status.Version.Protocol]
 		if ok {
-			s = fmt.Sprintf("%v "+ansi.Gray+"(%v)", protoVerName, status.Version.Protocol)
+			s = fmt.Sprintf("%v "+term.Gray+"(%v)", protoVerName, status.Version.Protocol)
 		} else {
 			s = strconv.Itoa(int(status.Version.Protocol))
 		}
@@ -166,7 +166,7 @@ func printStatus(status *mc.StatusResponse) {
 	printLine("Secure chat", formatBool(!status.EnforcesSecureChat, "Not enforced", "Enforced"))
 
 	if status.PreventsChatReports {
-		printLine("Prevents chat reports", ansi.Green+"Yes")
+		printLine("Prevents chat reports", term.Green+"Yes")
 
 	}
 }
@@ -175,10 +175,10 @@ func printBedrock(status mcpe.StatusResponse) {
 	printLine("Name", mcpe.LegacyTextAnsi(status.Name))
 	printLine("Level", mcpe.LegacyTextAnsi(status.Level))
 	printLatency(status.Latency)
-	printLine("Version", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
+	printLine("Version", fmt.Sprintf("%v "+term.Gray+"(%v)", status.Version.Name, status.Version.Protocol))
 	printPlayers(status.Players.Online, status.Players.Max, nil)
 	printLine("Edition", status.Edition)
-	printLine("Game Mode", fmt.Sprintf("%v "+ansi.Gray+"(%v)", status.GameMode.Name, status.GameMode.ID))
+	printLine("Game Mode", fmt.Sprintf("%v "+term.Gray+"(%v)", status.GameMode.Name, status.GameMode.ID))
 }
 
 func printQuery(query mc.QueryResponse) {
@@ -196,7 +196,7 @@ func printQuery(query mc.QueryResponse) {
 		printLine("Plugins", strings.Join(query.Plugins, "\n"))
 	}
 	if lines == prev {
-		printLine("Query", ansi.Green+"Enabled")
+		printLine("Query", term.Green+"Enabled")
 	}
 }
 
@@ -240,7 +240,7 @@ func printResults(results results) {
 		printResult(results[resultStatus], s, func(status mc.StatusResponse) {
 			host, port = status.Host, status.Port
 			printStatus(&status)
-		}, ansi.Red+"Offline")
+		}, term.Red+"Offline")
 	}
 
 	if cfg.crossplay && results[resultStatus].v == nil && results[resultBedrockStatus].v != nil {
@@ -251,7 +251,7 @@ func printResults(results results) {
 		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
 			port = cfg.bedrockPort
 			printBedrock(status)
-		}, ansi.Red+"Offline")
+		}, term.Red+"Offline")
 	}
 
 	if cfg.query {
@@ -259,13 +259,13 @@ func printResults(results results) {
 		printResult(result, "Query", func(query mc.QueryResponse) {
 			port = query.Port
 			printQuery(query)
-		}, ansi.Red+"Disabled")
+		}, term.Red+"Disabled")
 	}
 
 	if cfg.crossplay {
 		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
-			printLine("Crossplay", ansi.Green+"Yes")
-		}, ansi.Red+"No")
+			printLine("Crossplay", term.Green+"Yes")
+		}, term.Red+"No")
 		if results[resultBedrockStatus].v == nil {
 			cfg.crossplay = false
 		}
@@ -275,13 +275,13 @@ func printResults(results results) {
 
 	if cfg.blocked {
 		printResult(results[resultBlocked], "Blocked", func(blocked string) {
-			printLine("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", ansi.Gray, blocked)))
+			printLine("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", term.Gray, blocked)))
 		}, "")
 	}
 
 	if cfg.cracked {
 		printResult(results[resultCracked], "Cracked", func(crackedWhitelisted [2]bool) {
-			printLine("Cracked", formatBool(crackedWhitelisted[0], ansi.Reset+"Yes", ansi.Reset+"No"))
+			printLine("Cracked", formatBool(crackedWhitelisted[0], term.Reset+"Yes", term.Reset+"No"))
 			if crackedWhitelisted[0] {
 				printLine("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
 			}
@@ -298,7 +298,7 @@ func printResults(results results) {
 		printPalette()
 	}
 
-	if cfg.icon && ansi.ColorSupport != ansi.NoColorSupport && lines < int(iconHeight())+1 {
+	if cfg.icon && term.ColorSupport != term.NoColorSupport && lines < int(iconHeight())+1 {
 		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
 	} else {
 		fmt.Print("\n")
@@ -310,36 +310,36 @@ func printPalette() {
 	var b strings.Builder
 	b.WriteRune('\n')
 	if cfg.icon {
-		b.WriteString(ansi.Fwd(cfg.iconSize + padding))
+		b.WriteString(term.Fwd(cfg.iconSize + padding))
 	}
 	for _, code := range codes[:len(codes)/2] {
-		b.WriteString(ansi.Bg(mc.ParseColor(code)))
+		b.WriteString(term.Bg(mc.ParseColor(code)))
 		b.WriteString("   ")
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	b.WriteRune('\n')
 	if cfg.icon {
-		b.WriteString(ansi.Fwd(cfg.iconSize + padding))
+		b.WriteString(term.Fwd(cfg.iconSize + padding))
 	}
 	for _, code := range codes[len(codes)/2:] {
-		b.WriteString(ansi.Bg(mc.ParseColor(code)))
+		b.WriteString(term.Bg(mc.ParseColor(code)))
 		b.WriteString("   ")
 	}
 	lines += 3
 	if cfg.bedrock {
 		const codes = "ghijmnpqstuv"
-		b.WriteString(ansi.Reset)
+		b.WriteString(term.Reset)
 		b.WriteRune('\n')
 		if cfg.icon {
-			b.WriteString(ansi.Fwd(cfg.iconSize + padding))
+			b.WriteString(term.Fwd(cfg.iconSize + padding))
 		}
 		for _, code := range codes {
-			b.WriteString(ansi.Bg(mcpe.ParseColor(code)))
+			b.WriteString(term.Bg(mcpe.ParseColor(code)))
 			b.WriteString("  ")
 		}
 		lines++
 	}
-	b.WriteString(ansi.Reset)
+	b.WriteString(term.Reset)
 	b.WriteRune('\n')
 	fmt.Print(b.String())
 }
@@ -347,9 +347,9 @@ func printPalette() {
 func formatBool(bool bool, t, f string) string {
 	var s string
 	if bool {
-		s = ansi.Green + t
+		s = term.Green + t
 	} else {
-		s = ansi.Red + f
+		s = term.Red + f
 	}
 	return s
 }
