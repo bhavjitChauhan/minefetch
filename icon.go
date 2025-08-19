@@ -16,7 +16,7 @@ import (
 
 const iconAspectRatio = 0.5
 
-//go:embed unknown_server.png
+//go:embed embed/default.png
 var defaultIcon []byte
 
 func iconHeight() uint {
