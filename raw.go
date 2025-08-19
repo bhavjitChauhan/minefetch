@@ -23,10 +23,10 @@ func printRawResults(results results) {
 	if cfg.status {
 		print(results[resultStatus])
 	}
-	if cfg.bedrock || cfg.crossplay {
+	if cfg.bedrock.enabled || cfg.crossplay {
 		print(results[resultBedrockStatus])
 	}
-	if cfg.query {
+	if cfg.query.enabled {
 		print(results[resultQuery])
 	}
 }

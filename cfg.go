@@ -12,39 +12,55 @@ import (
 )
 
 var cfg = struct {
-	host        string
-	port        uint16
-	help        bool
-	proto       int32
-	timeout     time.Duration
-	status      bool
-	icon        bool
-	iconType    string
-	iconSize    uint
-	bedrock     bool
-	bedrockPort uint16
-	crossplay   bool
-	query       bool
-	queryPort   uint16
-	blocked     bool
-	cracked     bool
-	rcon        bool
-	rconPort    uint16
-	palette     bool
-	color       string
-	output      string
+	help    bool
+	host    string
+	port    uint16
+	timeout time.Duration
+	proto   int32
+	status  bool
+	bedrock struct {
+		enabled bool
+		port    uint16
+	}
+	crossplay bool
+	query     struct {
+		enabled bool
+		port    uint16
+	}
+	cracked bool
+	blocked bool
+	rcon    struct {
+		enabled bool
+		port    uint16
+	}
+	icon struct {
+		enabled bool
+		format  string
+		size    uint
+	}
+	palette bool
+	output  string
+	color   string
 }{
-	host:        "localhost",
-	status:      true,
-	icon:        true,
-	bedrockPort: 19132,
-	crossplay:   true,
-	timeout:     time.Second,
-	iconSize:    32,
-	rconPort:    25575,
-	palette:     true,
-	color:       "auto",
-	output:      "print",
+	host:      "localhost",
+	status:    true,
+	crossplay: true,
+	bedrock: struct {
+		enabled bool
+		port    uint16
+	}{port: 19132},
+	timeout: time.Second,
+	rcon: struct {
+		enabled bool
+		port    uint16
+	}{port: 25575},
+	icon: struct {
+		enabled bool
+		format  string
+		size    uint
+	}{enabled: true, size: 32},
+	palette: true,
+	output:  "print",
 }
 
 func printHelp() {
@@ -61,24 +77,24 @@ Flags:
 func parseArgs() (err error) {
 	proto := "1.21.8"
 	flag.Var(&cfg.help, "help", 'h', cfg.help, "")
-	flag.Var(&proto, "proto", 'p', proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
+	flag.Var(&proto, "proto", 'p', proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.status, "no-status", 0, cfg.status, "Don't get server info using the Server List Ping interface.")
-	flag.Var(&cfg.icon, "no-icon", 0, cfg.icon, "Don't print the server icon.")
-	flag.Var(&cfg.iconType, "icon", 0, "auto", "Icon print format. (sixel, half)")
-	flag.Var(&cfg.iconSize, "icon-size", 0, cfg.iconSize, "Icon size in pixels.")
-	flag.Var(&cfg.bedrock, "bedrock", 'b', cfg.bedrock, "Get Bedrock server info.")
-	flag.Var(&cfg.bedrockPort, "bedrock-port", 0, cfg.bedrockPort, "Bedrock server port.")
+	flag.Var(&cfg.bedrock.enabled, "bedrock", 'b', cfg.bedrock.enabled, "Get Bedrock server info.")
+	flag.Var(&cfg.bedrock.port, "bedrock-port", 0, cfg.bedrock.port, "Bedrock server port.")
 	flag.Var(&cfg.crossplay, "no-crossplay", 0, cfg.crossplay, "Don't check if a Bedrock server is running on the same host.")
-	flag.Var(&cfg.query, "query", 'q', cfg.query, "Get server info using the query protocol.")
-	flag.Var(&cfg.queryPort, "query-port", 0, "auto", "Query protocol port.")
+	flag.Var(&cfg.query.enabled, "query", 'q', cfg.query.enabled, "Get server info using the query protocol.")
+	flag.Var(&cfg.query.port, "query-port", 0, "auto", "Query protocol port.")
 	flag.Var(&cfg.blocked, "blocked", 0, cfg.blocked, "Check the host against Mojang's blocklist.")
 	flag.Var(&cfg.cracked, "cracked", 'c', cfg.cracked, "Attempt to login using an offline player.")
-	flag.Var(&cfg.rcon, "rcon", 'r', cfg.rcon, "Check if the RCON protocol is enabled.")
-	flag.Var(&cfg.rconPort, "rcon-port", 0, cfg.rconPort, "RCON protocol port.")
+	flag.Var(&cfg.rcon.enabled, "rcon", 'r', cfg.rcon.enabled, "Check if the RCON protocol is enabled.")
+	flag.Var(&cfg.rcon.port, "rcon-port", 0, cfg.rcon.port, "RCON protocol port.")
+	flag.Var(&cfg.icon.enabled, "no-icon", 0, cfg.icon.enabled, "Don't print the server icon.")
+	flag.Var(&cfg.icon.format, "icon", 0, "auto", "Icon print format. (sixel, half)")
+	flag.Var(&cfg.icon.size, "icon-size", 0, cfg.icon.size, "Icon size in pixels.")
 	flag.Var(&cfg.palette, "no-palette", 0, cfg.palette, "Print Minecraft's formatting code colors.")
-	flag.Var(&cfg.color, "color", 0, cfg.color, "Override terminal color support detection. (0, 16, 256, true)")
 	flag.Var(&cfg.output, "output", 'o', cfg.output, "Output format. (print, raw)")
+	flag.Var(&cfg.color, "color", 0, "auto", "Override terminal color support detection. (0, 16, 256, true)")
 
 	args, err := flag.Parse()
 	if err != nil {
@@ -89,18 +105,18 @@ func parseArgs() (err error) {
 		printHelp()
 	}
 
-	if cfg.bedrock {
+	if cfg.bedrock.enabled {
 		cfg.status = false
-		cfg.query = false
+		cfg.query.enabled = false
 		cfg.cracked = false
-		cfg.rcon = false
+		cfg.rcon.enabled = false
 	}
 
 	if !cfg.status {
 		cfg.crossplay = false
 	}
 
-	if cfg.color != "auto" {
+	if cfg.color != "" {
 		switch cfg.color {
 		case "0":
 			term.ColorSupport = term.NoColorSupport
@@ -127,15 +143,15 @@ func parseArgs() (err error) {
 		cfg.palette = false
 	}
 
-	if cfg.iconType != "" {
-		if cfg.iconType != "sixel" && cfg.iconType != "half" {
-			return fmt.Errorf("invalid icon type: %v", cfg.iconType)
+	if cfg.icon.format != "" {
+		if cfg.icon.format != "sixel" && cfg.icon.format != "half" {
+			return fmt.Errorf("invalid icon type: %v", cfg.icon.format)
 		}
 	} else {
 		if term.ColorSupport != term.NoColorSupport {
-			cfg.iconType = "half"
+			cfg.icon.format = "half"
 		} else {
-			cfg.iconType = "shade"
+			cfg.icon.format = "shade"
 		}
 	}
 
@@ -162,8 +178,8 @@ func parseArgs() (err error) {
 
 	if port != 0 {
 		cfg.port = port
-		if cfg.bedrock {
-			cfg.bedrockPort = port
+		if cfg.bedrock.enabled {
+			cfg.bedrock.port = port
 		}
 	}
 

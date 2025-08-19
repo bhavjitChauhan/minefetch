@@ -57,17 +57,17 @@ func startResults(ch chan<- result) {
 		}()
 	}
 
-	if cfg.bedrock || cfg.crossplay {
+	if cfg.bedrock.enabled || cfg.crossplay {
 		go func() {
-			status, err := mcpe.Status(mc.JoinHostPort(cfg.host, cfg.bedrockPort))
+			status, err := mcpe.Status(mc.JoinHostPort(cfg.host, cfg.bedrock.port))
 			ch <- result{resultBedrockStatus, status, err, false}
 		}()
 	}
 
-	if cfg.query {
+	if cfg.query.enabled {
 		go func() {
 			address := cfg.host
-			queryPort := cfg.queryPort
+			queryPort := cfg.query.port
 			if queryPort == 0 {
 				queryPort = cfg.port
 			}
@@ -98,9 +98,9 @@ func startResults(ch chan<- result) {
 		}()
 	}
 
-	if cfg.rcon {
+	if cfg.rcon.enabled {
 		go func() {
-			enabled, _ := mc.IsRconEnabled(mc.JoinHostPort(cfg.host, cfg.rconPort))
+			enabled, _ := mc.IsRconEnabled(mc.JoinHostPort(cfg.host, cfg.rcon.port))
 			ch <- result{resultRcon, enabled, nil, false}
 		}()
 	}
@@ -108,7 +108,7 @@ func startResults(ch chan<- result) {
 
 func collectResults(ch <-chan result, timeout <-chan time.Time) results {
 	var results results
-	n := countBools(cfg.status, cfg.bedrock, cfg.crossplay, cfg.query, cfg.blocked, cfg.cracked, cfg.rcon)
+	n := countBools(cfg.status, cfg.bedrock.enabled, cfg.crossplay, cfg.query.enabled, cfg.blocked, cfg.cracked, cfg.rcon.enabled)
 	if n == 0 {
 		log.Fatalln("Nothing to do!")
 	}

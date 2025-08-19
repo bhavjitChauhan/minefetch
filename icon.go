@@ -20,7 +20,7 @@ const iconAspectRatio = 0.5
 var defaultIcon []byte
 
 func iconHeight() uint {
-	return uint(float64(cfg.iconSize) * iconAspectRatio)
+	return uint(float64(cfg.icon.size) * iconAspectRatio)
 }
 
 func printIcon(b []byte) {
@@ -36,26 +36,26 @@ func printIcon(b []byte) {
 		}
 	}
 
-	switch cfg.iconType {
+	switch cfg.icon.format {
 	case "sixel":
 		cellWidth, cellHeight, _ := term.QueryCellSize()
 		if cellWidth == 0 || cellHeight == 0 {
 			log.Fatalln("Failed to get cell size")
 		}
-		img = scale.NearestNeighbor(img, cfg.iconSize*cellWidth, iconHeight()*cellHeight)
+		img = scale.NearestNeighbor(img, cfg.icon.size*cellWidth, iconHeight()*cellHeight)
 		sixel.Encode(os.Stdout, img, nil)
 		// Some terminals print a newline after sixel images, some don't
 		// fmt.Println()
-		fmt.Print(term.Up(iconHeight()) + term.Back(cfg.iconSize))
+		fmt.Print(term.Up(iconHeight()) + term.Back(cfg.icon.size))
 	case "half":
-		f := float64(cfg.iconSize) / float64(img.Bounds().Dx())
+		f := float64(cfg.icon.size) / float64(img.Bounds().Dx())
 		if f != 1 {
 			img = scale.Lanczos(img, f)
 		}
 		print.HalfPrint(img, 255/2)
-		fmt.Print(term.Up(iconHeight()-1) + term.Back(cfg.iconSize))
+		fmt.Print(term.Up(iconHeight()-1) + term.Back(cfg.icon.size))
 	case "shade":
-		f := float64(cfg.iconSize) / float64(img.Bounds().Dx()) / 2
+		f := float64(cfg.icon.size) / float64(img.Bounds().Dx()) / 2
 		if f != 1 {
 			img = scale.Lanczos(img, f)
 		}

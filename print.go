@@ -21,8 +21,8 @@ var lines = 0
 
 func printLine(label string, data any) {
 	ss := strings.Split(fmt.Sprint(data), "\n")
-	if cfg.icon {
-		fmt.Print(term.Fwd(cfg.iconSize + padding))
+	if cfg.icon.enabled {
+		fmt.Print(term.Fwd(cfg.icon.size + padding))
 	}
 	if len(ss) == 1 && term.RemoveCsi(ss[0]) == "" {
 		ss[0] = term.Gray + "(empty)"
@@ -30,8 +30,8 @@ func printLine(label string, data any) {
 	fmt.Println(term.Bold + term.Blue + label + term.Reset + ": " + ss[0])
 	for _, v := range ss[1:] {
 		fwd := uint(len(label)) + 2
-		if cfg.icon && term.ColorSupport != term.NoColorSupport {
-			fwd += cfg.iconSize + padding
+		if cfg.icon.enabled && term.ColorSupport != term.NoColorSupport {
+			fwd += cfg.icon.size + padding
 			fmt.Println(term.Fwd(fwd) + v)
 		} else {
 			fmt.Println(strings.Repeat(" ", int(fwd)) + v)
@@ -72,14 +72,14 @@ func printNetInfo(host string, port uint16) {
 	if port == 0 {
 		port = cfg.port
 	}
-	if cfg.bedrock {
-		port = cfg.bedrockPort
+	if cfg.bedrock.enabled {
+		port = cfg.bedrock.port
 	}
 	if port != 0 {
 		printLine("Port", port)
 	}
 	if cfg.crossplay {
-		printLine("Bedrock port", cfg.bedrockPort)
+		printLine("Bedrock port", cfg.bedrock.port)
 	}
 }
 
@@ -123,7 +123,7 @@ func printPlayers(online, max int, sample []string) {
 }
 
 func printStatus(status *mc.StatusResponse) {
-	if cfg.icon {
+	if cfg.icon.enabled {
 		printIcon(status.Icon)
 	}
 
@@ -224,7 +224,7 @@ func printResult[T any](result result, label string, fn func(T), failed string) 
 func printResults(results results) {
 	host, port := cfg.host, cfg.port
 
-	if cfg.icon && (!cfg.status || results[resultStatus].err != nil || results[resultStatus].timeout) {
+	if cfg.icon.enabled && (!cfg.status || results[resultStatus].err != nil || results[resultStatus].timeout) {
 		printIcon(nil)
 	}
 
@@ -244,17 +244,17 @@ func printResults(results results) {
 	}
 
 	if cfg.crossplay && results[resultStatus].v == nil && results[resultBedrockStatus].v != nil {
-		cfg.bedrock = true
+		cfg.bedrock.enabled = true
 		cfg.crossplay = false
 	}
-	if cfg.bedrock {
+	if cfg.bedrock.enabled {
 		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
-			port = cfg.bedrockPort
+			port = cfg.bedrock.port
 			printBedrock(status)
 		}, term.Red+"Offline")
 	}
 
-	if cfg.query {
+	if cfg.query.enabled {
 		result := results[resultQuery]
 		printResult(result, "Query", func(query mc.QueryResponse) {
 			port = query.Port
@@ -288,7 +288,7 @@ func printResults(results results) {
 		}, "")
 	}
 
-	if cfg.rcon {
+	if cfg.rcon.enabled {
 		printResult(results[resultRcon], "RCON", func(enabled bool) {
 			printLine("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		}, "")
@@ -298,7 +298,7 @@ func printResults(results results) {
 		printPalette()
 	}
 
-	if cfg.icon && term.ColorSupport != term.NoColorSupport && lines < int(iconHeight())+1 {
+	if cfg.icon.enabled && term.ColorSupport != term.NoColorSupport && lines < int(iconHeight())+1 {
 		fmt.Print(strings.Repeat("\n", int(iconHeight())-lines+1))
 	} else {
 		fmt.Print("\n")
@@ -309,8 +309,8 @@ func printPalette() {
 	const codes = "0123456789abcdef"
 	var b strings.Builder
 	b.WriteRune('\n')
-	if cfg.icon {
-		b.WriteString(term.Fwd(cfg.iconSize + padding))
+	if cfg.icon.enabled {
+		b.WriteString(term.Fwd(cfg.icon.size + padding))
 	}
 	for _, code := range codes[:len(codes)/2] {
 		b.WriteString(term.Bg(mc.ParseColor(code)))
@@ -318,20 +318,20 @@ func printPalette() {
 	}
 	b.WriteString(term.Reset)
 	b.WriteRune('\n')
-	if cfg.icon {
-		b.WriteString(term.Fwd(cfg.iconSize + padding))
+	if cfg.icon.enabled {
+		b.WriteString(term.Fwd(cfg.icon.size + padding))
 	}
 	for _, code := range codes[len(codes)/2:] {
 		b.WriteString(term.Bg(mc.ParseColor(code)))
 		b.WriteString("   ")
 	}
 	lines += 3
-	if cfg.bedrock {
+	if cfg.bedrock.enabled {
 		const codes = "ghijmnpqstuv"
 		b.WriteString(term.Reset)
 		b.WriteRune('\n')
-		if cfg.icon {
-			b.WriteString(term.Fwd(cfg.iconSize + padding))
+		if cfg.icon.enabled {
+			b.WriteString(term.Fwd(cfg.icon.size + padding))
 		}
 		for _, code := range codes {
 			b.WriteString(term.Bg(mcpe.ParseColor(code)))
