@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"minefetch/internal/image/pngconfig"
 	"minefetch/internal/mc"
 	"minefetch/internal/mcpe"
@@ -200,62 +199,55 @@ func printQuery(query mc.QueryResponse) {
 	}
 }
 
-func printResult[T any](result result, label string, fn func(T), failed string) {
-	switch {
-	case result.v != nil:
-		v, ok := result.v.(T)
-		if !ok {
-			log.Panicf("Unexpected result value for %v: %v", label, result.v)
-		}
-		fn(v)
-	case result.err != nil, result.timeout:
+func printResult[T any](result result[T], label string, fn func(T), failed string) {
+	if result.success {
+		fn(result.v)
+	} else {
 		if failed != "" {
 			printLine(label, failed)
-		} else if result.timeout {
-			printTimeout(label)
-		} else {
+		} else if result.err != nil {
 			printErr(label, result.err)
+		} else {
+			printTimeout(label)
 		}
-	default:
-		log.Panicln("Unexpected result state:", result)
 	}
 }
 
-func printResults(results results) {
+func printResults(results *results) {
 	host, port := cfg.host, cfg.port
 
-	if cfg.icon.enabled && (!cfg.status || results[resultStatus].err != nil || results[resultStatus].timeout) {
+	if cfg.icon.enabled && (!cfg.status || !results.status.success) {
 		printIcon(nil)
 	}
 
 	if cfg.status {
-		result := results[resultStatus]
-		if result.err != nil || result.timeout {
+		result := results.status
+		if !result.success {
 			cfg.status = false
 		}
 		s := "Status"
-		if results[resultBedrockStatus].v != nil {
+		if results.bedrock.success {
 			s = "Java"
 		}
-		printResult(results[resultStatus], s, func(status mc.StatusResponse) {
+		printResult(results.status, s, func(status mc.StatusResponse) {
 			host, port = status.Host, status.Port
 			printStatus(&status)
 		}, term.Red+"Offline")
 	}
 
-	if cfg.crossplay && results[resultStatus].v == nil && results[resultBedrockStatus].v != nil {
+	if cfg.crossplay && !results.status.success && results.bedrock.success {
 		cfg.bedrock.enabled = true
 		cfg.crossplay = false
 	}
 	if cfg.bedrock.enabled {
-		printResult(results[resultBedrockStatus], "Bedrock", func(status mcpe.StatusResponse) {
+		printResult(results.bedrock, "Bedrock", func(status mcpe.StatusResponse) {
 			port = cfg.bedrock.port
 			printBedrock(status)
 		}, term.Red+"Offline")
 	}
 
 	if cfg.query.enabled {
-		result := results[resultQuery]
+		result := results.query
 		printResult(result, "Query", func(query mc.QueryResponse) {
 			port = query.Port
 			printQuery(query)
@@ -263,10 +255,10 @@ func printResults(results results) {
 	}
 
 	if cfg.crossplay {
-		printResult(results[resultBedrockStatus], "Crossplay", func(status mcpe.StatusResponse) {
+		printResult(results.bedrock, "Crossplay", func(status mcpe.StatusResponse) {
 			printLine("Crossplay", term.Green+"Yes")
 		}, term.Red+"No")
-		if results[resultBedrockStatus].v == nil {
+		if !results.bedrock.success {
 			cfg.crossplay = false
 		}
 	}
@@ -274,22 +266,22 @@ func printResults(results results) {
 	printNetInfo(host, port)
 
 	if cfg.blocked {
-		printResult(results[resultBlocked], "Blocked", func(blocked string) {
+		printResult(results.blocked, "Blocked", func(blocked string) {
 			printLine("Blocked", formatBool(blocked == "", "No", fmt.Sprintf("Yes %v(%v)", term.Gray, blocked)))
 		}, "")
 	}
 
 	if cfg.cracked {
-		printResult(results[resultCracked], "Cracked", func(crackedWhitelisted [2]bool) {
-			printLine("Cracked", formatBool(crackedWhitelisted[0], term.Reset+"Yes", term.Reset+"No"))
-			if crackedWhitelisted[0] {
-				printLine("Whitelist", formatBool(!crackedWhitelisted[1], "Off", "On"))
+		printResult(results.cracked, "Cracked", func(crackedWhitelisted crackedWhitelisted) {
+			printLine("Cracked", formatBool(crackedWhitelisted.cracked, term.Reset+"Yes", term.Reset+"No"))
+			if crackedWhitelisted.cracked {
+				printLine("Whitelist", formatBool(!crackedWhitelisted.whitelisted, "Off", "On"))
 			}
 		}, "")
 	}
 
 	if cfg.rcon.enabled {
-		printResult(results[resultRcon], "RCON", func(enabled bool) {
+		printResult(results.rcon, "RCON", func(enabled bool) {
 			printLine("RCON", formatBool(!enabled, "Disabled", "Enabled"))
 		}, "")
 	}

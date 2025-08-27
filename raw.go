@@ -2,31 +2,16 @@ package main
 
 import (
 	"fmt"
-	"minefetch/internal/mc"
-	"minefetch/internal/mcpe"
 )
 
-func printRawResults(results results) {
-	print := func(result result) {
-		switch v := result.v.(type) {
-		case mc.StatusResponse:
-			fmt.Println(v.Raw)
-		case mcpe.StatusResponse:
-			fmt.Println(v.Raw)
-		case mc.QueryResponse:
-			fmt.Println(v.Raw)
-		default:
-			fmt.Println()
-		}
-	}
-
+func printRawResults(results *results) {
 	if cfg.status {
-		print(results[resultStatus])
+		fmt.Println(results.status.v.Raw)
 	}
 	if cfg.bedrock.enabled || cfg.crossplay {
-		print(results[resultBedrockStatus])
+		fmt.Println(results.bedrock.v.Raw)
 	}
 	if cfg.query.enabled {
-		print(results[resultQuery])
+		fmt.Println(results.query.v.Raw)
 	}
 }
