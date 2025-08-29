@@ -27,7 +27,12 @@ func printLine(label string, data any) {
 		ss[0] = term.Gray + "(empty)"
 	}
 	fmt.Println(term.Bold + term.Blue + label + term.Reset + ": " + ss[0] + term.Reset)
-	for _, v := range ss[1:] {
+	n := uint(len(ss))
+	if cfg.maxList != 0 && n > cfg.maxList {
+		n = cfg.maxList
+		ss[n-1] = fmt.Sprintf(term.Gray+"(%v more)", len(ss)-int(cfg.maxList))
+	}
+	for _, v := range ss[1:n] {
 		fwd := uint(len(label)) + 2
 		if cfg.icon.enabled && term.ColorSupport != term.NoColorSupport {
 			fwd += cfg.icon.size + padding
