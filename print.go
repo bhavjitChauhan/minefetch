@@ -26,17 +26,16 @@ func printLine(label string, data any) {
 	if len(ss) == 1 && term.RemoveCsi(ss[0]) == "" {
 		ss[0] = term.Gray + "(empty)"
 	}
-	fmt.Println(term.Bold + term.Blue + label + term.Reset + ": " + ss[0])
+	fmt.Println(term.Bold + term.Blue + label + term.Reset + ": " + ss[0] + term.Reset)
 	for _, v := range ss[1:] {
 		fwd := uint(len(label)) + 2
 		if cfg.icon.enabled && term.ColorSupport != term.NoColorSupport {
 			fwd += cfg.icon.size + padding
-			fmt.Println(term.Fwd(fwd) + v)
+			fmt.Println(term.Fwd(fwd) + v + term.Reset)
 		} else {
-			fmt.Println(strings.Repeat(" ", int(fwd)) + v)
+			fmt.Println(strings.Repeat(" ", int(fwd)) + v + term.Reset)
 		}
 	}
-	fmt.Print(term.Reset)
 	lines += len(ss)
 }
 
@@ -166,7 +165,14 @@ func printStatus(status *mc.StatusResponse) {
 
 	if status.PreventsChatReports {
 		printLine("Prevents chat reports", term.Green+"Yes")
+	}
 
+	if len(status.Forge.Mods) > 0 {
+		mods := make([]string, 0, len(status.Forge.Mods))
+		for _, m := range status.Forge.Mods {
+			mods = append(mods, m.Name+" "+term.Gray+m.Version)
+		}
+		printLine("Mods", strings.Join(mods, "\n"))
 	}
 }
 

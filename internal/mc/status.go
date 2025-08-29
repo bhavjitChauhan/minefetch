@@ -44,11 +44,44 @@ type StatusResponse struct {
 	}
 	Icon                Icon `json:"favicon"`
 	PreventsChatReports bool
+	Forge               struct {
+		Version uint8
+		Mods    []mod
+	}
 
 	Host    string
 	Port    uint16
 	Latency time.Duration
 	Raw     string
+}
+
+type mod struct {
+	Name    string
+	Version string
+}
+
+type statusResponse struct {
+	StatusResponse
+	ForgeData struct {
+		Channels []struct {
+			Res      string
+			Version  string
+			Required bool
+		}
+		Mods []struct {
+			ModId     string
+			ModMarker string
+		}
+		FmlNetworkVersion int
+		D                 string
+	}
+	ModInfo struct {
+		Type    string
+		ModList []struct {
+			ModId   string
+			Version string
+		}
+	}
 }
 
 // Status attempts to get general server info using the [Server List Ping interface].
@@ -148,12 +181,28 @@ func readStatusResponse(r io.Reader, status *StatusResponse) error {
 		return errors.New("failed to read string: " + err.Error())
 	}
 
-	status.Raw = s
+	var raw statusResponse
+	raw.Raw = s
 
-	err = json.Unmarshal([]byte(s), &status)
+	err = json.Unmarshal([]byte(s), &raw)
 	if err != nil {
 		return errors.New("failed to parse JSON: " + err.Error())
 	}
 
+	if len(raw.ForgeData.Mods) > 0 {
+		raw.Forge.Version = uint8(raw.ForgeData.FmlNetworkVersion)
+		raw.Forge.Mods = make([]mod, 0, len(raw.ForgeData.Mods))
+		for _, m := range raw.ForgeData.Mods {
+			raw.Forge.Mods = append(raw.Forge.Mods, mod{m.ModId, m.ModMarker})
+		}
+	} else if len(raw.ModInfo.ModList) > 0 {
+		raw.Forge.Version = 1
+		raw.Forge.Mods = make([]mod, 0, len(raw.ModInfo.ModList))
+		for _, m := range raw.ModInfo.ModList {
+			raw.Forge.Mods = append(raw.Forge.Mods, mod{m.ModId, m.Version})
+		}
+	}
+
+	*status = raw.StatusResponse
 	return nil
 }
