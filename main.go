@@ -9,7 +9,7 @@ func main() {
 
 	err := parseArgs()
 	if err != nil {
-		log.Fatalln("Failed to parse arguments:", err)
+		log.Fatalf("Failed to parse arguments: %v\nSee minefetch --help\n", err)
 	}
 
 	results := getResults()
