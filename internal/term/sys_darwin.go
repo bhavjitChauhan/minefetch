@@ -1,3 +1,5 @@
+//go:build darwin
+
 package term
 
 import "syscall"
