@@ -24,8 +24,9 @@ import (
 	"image/color"
 	"image/draw"
 	"io"
-	"minefetch/internal/image/quant"
 	"strconv"
+
+	"github.com/bhavjitChauhan/minefetch/internal/image/quant"
 )
 
 type Options struct {

@@ -3,15 +3,16 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"minefetch/internal/image/pngconfig"
-	"minefetch/internal/mc"
-	"minefetch/internal/mcpe"
-	"minefetch/internal/term"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/bhavjitChauhan/minefetch/internal/image/pngconfig"
+	"github.com/bhavjitChauhan/minefetch/internal/mc"
+	"github.com/bhavjitChauhan/minefetch/internal/mcpe"
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 const padding = 2

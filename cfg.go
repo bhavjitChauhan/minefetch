@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"minefetch/internal/flag"
-	"minefetch/internal/mc"
-	"minefetch/internal/term"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/bhavjitChauhan/minefetch/internal/flag"
+	"github.com/bhavjitChauhan/minefetch/internal/mc"
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 var cfg = struct {

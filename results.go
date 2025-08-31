@@ -1,10 +1,11 @@
 package main
 
 import (
-	"minefetch/internal/mc"
-	"minefetch/internal/mcpe"
 	"sync"
 	"time"
+
+	"github.com/bhavjitChauhan/minefetch/internal/mc"
+	"github.com/bhavjitChauhan/minefetch/internal/mcpe"
 )
 
 type result[T any] struct {

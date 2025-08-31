@@ -7,11 +7,12 @@ import (
 	"image"
 	"image/png"
 	"log"
-	"minefetch/internal/image/print"
-	"minefetch/internal/image/scale"
-	"minefetch/internal/image/sixel"
-	"minefetch/internal/term"
 	"os"
+
+	"github.com/bhavjitChauhan/minefetch/internal/image/print"
+	"github.com/bhavjitChauhan/minefetch/internal/image/scale"
+	"github.com/bhavjitChauhan/minefetch/internal/image/sixel"
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 const iconAspectRatio = 0.5

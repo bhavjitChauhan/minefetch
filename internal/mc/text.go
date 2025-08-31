@@ -3,10 +3,11 @@ package mc
 import (
 	"encoding/json"
 	"image/color"
-	"minefetch/internal/emoji"
-	"minefetch/internal/term"
 	"strconv"
 	"strings"
+
+	"github.com/bhavjitChauhan/minefetch/internal/emoji"
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 // Text is a text component format object.

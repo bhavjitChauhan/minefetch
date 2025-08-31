@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"minefetch/internal/term"
 	"strings"
+
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 // HalfPrint prints an image using a combination of Unicode upper and lower half block characters (▀, ▄)

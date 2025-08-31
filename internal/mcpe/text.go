@@ -2,9 +2,10 @@ package mcpe
 
 import (
 	"image/color"
-	"minefetch/internal/term"
 	"strconv"
 	"strings"
+
+	"github.com/bhavjitChauhan/minefetch/internal/term"
 )
 
 // LegacyTextAnsi converts [Minecraft legacy formatting] to ANSI escape codes.
