@@ -4,6 +4,8 @@ import (
 	"log"
 )
 
+var version = "dev"
+
 func main() {
 	log.SetFlags(0)
 

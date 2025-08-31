@@ -50,7 +50,7 @@ func main() {
 				file += ".exe"
 			}
 			log.Printf("Building %s...", file)
-			cmd := exec.Command("go", "build", "-o="+file, "-ldflags=-s")
+			cmd := exec.Command("go", "build", "-o="+file, "-ldflags=-s -X 'main.version="+version+"'")
 			cmd.Env = append(os.Environ(), "GOOS="+p.os, "GOARCH="+p.arch)
 			err := cmd.Run()
 			if err != nil {

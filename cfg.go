@@ -13,6 +13,7 @@ import (
 
 var cfg = struct {
 	help    bool
+	version bool
 	host    string
 	port    uint16
 	timeout time.Duration
@@ -78,7 +79,8 @@ Flags:
 
 func parseArgs() (err error) {
 	proto := "1.21.8"
-	flag.Var(&cfg.help, "help", 'h', cfg.help, "")
+	flag.Var(&cfg.help, "help", 'h', cfg.help, "Print usage information.")
+	flag.Var(&cfg.version, "version", 0, cfg.help, "Print Minefetch version.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
 	flag.Var(&proto, "proto", 'p', proto, "Protocol version to use for requests.")
 	flag.Var(&cfg.status, "no-status", 'S', cfg.status, "Don't get server info using the Server List Ping interface.")
@@ -106,6 +108,11 @@ func parseArgs() (err error) {
 
 	if cfg.help {
 		printHelp()
+	}
+
+	if cfg.version {
+		fmt.Println("Minefetch", version)
+		os.Exit(0)
 	}
 
 	if cfg.bedrock.enabled {
