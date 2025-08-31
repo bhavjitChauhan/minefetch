@@ -20,13 +20,13 @@ curl -fsSL https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/insta
 powershell -c "iwr https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/install.ps1 | iex"
 ```
 
-### Go
+<!-- ### Go
 
 If you have Go installed, you can use the `go install` command:
 
 ```sh
 go install github.com/bhavjitChauhan/minefetch@latest
-```
+``` -->
 
 ### Manual
 
