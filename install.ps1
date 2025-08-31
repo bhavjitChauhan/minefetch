@@ -5,7 +5,7 @@ if (-not $version) {
     Write-Host "Failed to get latest version" -ForegroundColor Red
     exit 1
 }
-$url = 'https://github.com/bhavjitChauhan/minefetch/releases/download/v$version/minefech_${version}_windows_amd64.exe'
+$url = "https://github.com/bhavjitChauhan/minefetch/releases/download/v${version}/minefetch_${version}_windows_amd64.exe"
 $dir = "$HOME\AppData\Local\Minefetch"
 $exe = "$dir\minefetch.exe"
 
