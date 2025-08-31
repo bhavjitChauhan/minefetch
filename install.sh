@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 set -ex
 
-version=$(curl -s https://api.github.com/repos/bhavjitChauhan/minefetch/releases/latest | grep -Po '"tag_name": "\K.*?(?=")' | sed 's/^v//')
+version=$(
+  curl -s https://api.github.com/repos/bhavjitChauhan/minefetch/releases/latest |
+  grep '"tag_name":' |
+  head -n1 |
+  sed -E 's/.*"tag_name":[[:space:]]*"v?([^"]+)".*/\1/'
+)
 if [ -z "$version" ]; then
     echo -e "\e[91mFailed to get latest version\e[0m"
     exit 1
