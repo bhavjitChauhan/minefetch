@@ -11,7 +11,7 @@ Minefetch is a neofetch-like tool for fetching Minecraft server information.
 #### Unix-like (Linux and macOS)
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/install.sh | bash
 ```
 
 #### Windows
