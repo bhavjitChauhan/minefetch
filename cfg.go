@@ -79,7 +79,7 @@ Flags:
 }
 
 func parseArgs() (err error) {
-	proto := "1.21.8"
+	proto := "latest"
 	flag.Var(&cfg.help, "help", 'h', cfg.help, "Print usage information.")
 	flag.Var(&cfg.version, "version", 0, cfg.help, "Print Minefetch version.")
 	flag.Var(&cfg.timeout, "timeout", 't', cfg.timeout, "Maximum time to wait for a response before timing out.")
