@@ -100,8 +100,6 @@ type statusResponse struct {
 // [Copenheimer]: https://2b2t.miraheze.org/wiki/Fifth_Column#Copenheimer
 func Status(address string, proto int32) (status StatusResponse, err error) {
 	host, port := lookupHostPort(address, 25565)
-	status.Host = host
-	status.Port = port
 
 	address = JoinHostPort(host, port)
 	conn, err := net.Dial("tcp", address)
@@ -122,11 +120,13 @@ func Status(address string, proto int32) (status StatusResponse, err error) {
 		return
 	}
 
-	err = readStatusResponse(conn, &status)
+	status, err = readStatusResponse(conn)
 	if err != nil {
 		err = errors.New("Failed to read status response: " + err.Error())
 		return
 	}
+	status.Host = host
+	status.Port = port
 
 	start := time.Now()
 	err = writePingRequest(conn, start.Unix())
@@ -167,18 +167,20 @@ func writeStatusRequest(w io.Writer) error {
 }
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Status_Response
-func readStatusResponse(r io.Reader, status *StatusResponse) error {
+func readStatusResponse(r io.Reader) (status StatusResponse, err error) {
 	id, buf, err := readPacket(r)
 	if err != nil {
-		return err
+		return
 	}
 	if id != 0x00 {
-		return errors.New(fmt.Sprint("unexpected packet ID: ", id))
+		err = errors.New(fmt.Sprint("unexpected packet ID: ", id))
+		return
 	}
 
 	s, err := readString(buf)
 	if err != nil {
-		return errors.New("failed to read string: " + err.Error())
+		err = errors.New("failed to read string: " + err.Error())
+		return
 	}
 
 	var raw statusResponse
@@ -186,7 +188,8 @@ func readStatusResponse(r io.Reader, status *StatusResponse) error {
 
 	err = json.Unmarshal([]byte(s), &raw)
 	if err != nil {
-		return errors.New("failed to parse JSON: " + err.Error())
+		err = errors.New("failed to parse JSON: " + err.Error())
+		return
 	}
 
 	if len(raw.ForgeData.Mods) > 0 {
@@ -203,6 +206,6 @@ func readStatusResponse(r io.Reader, status *StatusResponse) error {
 		}
 	}
 
-	*status = raw.StatusResponse
-	return nil
+	status = raw.StatusResponse
+	return
 }
