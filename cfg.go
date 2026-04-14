@@ -177,15 +177,16 @@ func parseArgs() (err error) {
 	case 1:
 		cfg.host, port, err = mc.SplitHostPort(args[0])
 		if err != nil {
-			err = nil
-			cfg.host = args[0]
+			return
 		}
 	case 2:
 		cfg.host = args[0]
-		port, err = parseUint16(args[1])
+		var port64 uint64
+		port64, err = strconv.ParseUint(args[1], 10, 16)
 		if err != nil {
 			return
 		}
+		port = uint16(port64)
 	default:
 		log.Print("Too many arguments.\n\n")
 		printHelp()
@@ -215,12 +216,4 @@ func parseFlagProto(proto string) int32 {
 	}
 
 	return int32(i)
-}
-
-func parseUint16(s string) (uint16, error) {
-	int, err := strconv.Atoi(s)
-	if err != nil {
-		return 0, err
-	}
-	return uint16(int), nil
 }

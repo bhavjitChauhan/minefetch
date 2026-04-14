@@ -118,15 +118,15 @@ func Parse() (remaining []string, err error) {
 			var uint64 uint64
 			uint64, err = strconv.ParseUint(v, 10, 0)
 			if err != nil {
-				err = fmt.Errorf("failed to parse integer flag value: %v", v)
+				err = fmt.Errorf("failed to parse uint flag value: %w", err)
 				return
 			}
 			*p = uint(uint64)
 		case *uint16:
 			var uint64 uint64
-			uint64, err = strconv.ParseUint(v, 10, 0)
+			uint64, err = strconv.ParseUint(v, 10, 16)
 			if err != nil {
-				err = fmt.Errorf("failed to parse integer flag value: %v", v)
+				err = fmt.Errorf("failed to parse uint16 flag value: %w", err)
 				return
 			}
 			*p = uint16(uint64)
@@ -134,7 +134,7 @@ func Parse() (remaining []string, err error) {
 			var d time.Duration
 			d, err = time.ParseDuration(v)
 			if err != nil {
-				err = fmt.Errorf("failed to parse duration flag value: %v", v)
+				err = fmt.Errorf("failed to parse duration flag value: %w", err)
 				return
 			}
 			*p = d

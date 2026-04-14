@@ -11,11 +11,11 @@ func SplitHostPort(address string) (host string, port uint16, err error) {
 	if err != nil {
 		return
 	}
-	int, err := strconv.Atoi(s)
+	port64, err := strconv.ParseUint(s, 10, 16)
 	if err != nil {
 		return
 	}
-	port = uint16(int)
+	port = uint16(port64)
 	return
 }
 
