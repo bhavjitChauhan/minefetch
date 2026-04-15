@@ -378,7 +378,7 @@ var versionIdName = map[int32]string{
 	772:        "1.21.7 – 1.21.8",
 	773:        "1.21.9 – 1.21.10",
 	774:        "1.21.11",
-	775:        "26.1 – 26.1.1",
+	775:        "26.1 – 26.1.2",
 	801:        "Combat Test 6",
 	802:        "Combat Test 7 – Combat Test 7c",
 	803:        "Combat Test 8 – Combat Test 8c",
@@ -676,6 +676,10 @@ var versionIdName = map[int32]string{
 	0x4000012E: "26.1-rc2",
 	0x4000012F: "26.1-rc3",
 	0x40000130: "26.1.1-rc1",
+	0x40000132: "26.2-snapshot-1",
+	0x40000133: "26.1.2-rc1",
+	0x40000134: "26.2 Snapshot 2",
+	0x40000135: "26.2 Snapshot 3",
 }
 
 var versionNameId = map[string]int32{
@@ -1144,6 +1148,7 @@ var versionNameId = map[string]int32{
 	"1.21.11":                           774,
 	"26.1":                              775,
 	"26.1.1":                            775,
+	"26.1.2":                            775,
 	"Combat Test 6":                     801,
 	"Combat Test 7":                     802,
 	"Combat Test 7b":                    802,
@@ -1456,4 +1461,8 @@ var versionNameId = map[string]int32{
 	"26.1-rc2":                          0x4000012E,
 	"26.1-rc3":                          0x4000012F,
 	"26.1.1-rc1":                        0x40000130,
+	"26.2-snapshot-1":                   0x40000132,
+	"26.1.2-rc1":                        0x40000133,
+	"26.2 Snapshot 2":                   0x40000134,
+	"26.2 Snapshot 3":                   0x40000135,
 }
