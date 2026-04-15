@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bhavjitChauhan/minefetch/internal/flag"
@@ -177,7 +178,11 @@ func parseArgs() (err error) {
 	case 1:
 		cfg.host, port, err = mc.SplitHostPort(args[0])
 		if err != nil {
-			return
+			if strings.ContainsRune(args[0], ':') {
+				return
+			}
+			err = nil
+			cfg.host = args[0]
 		}
 	case 2:
 		cfg.host = args[0]
