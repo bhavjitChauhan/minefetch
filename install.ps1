@@ -1,31 +1,27 @@
+# Minefetch installation script for Windows.
+
+$ErrorActionPreference = "Stop"
+
+$Url = "https://github.com/bhavjitChauhan/minefetch/releases/latest/download/minefetch_windows_amd64.exe"
+$Install = "$HOME\AppData\Local\Minefetch"
+$Exe = "$Install\minefetch.exe"
+
 Set-PSDebug -Trace 1
 
-$version = (Invoke-RestMethod -Uri 'https://api.github.com/repos/bhavjitChauhan/minefetch/releases/latest').tag_name.TrimStart('v')
-if (-not $version) {
-    Write-Host "Failed to get latest version" -ForegroundColor Red
-    exit 1
-}
-$url = "https://github.com/bhavjitChauhan/minefetch/releases/download/v${version}/minefetch_${version}_windows_amd64.exe"
-$dir = "$HOME\AppData\Local\Minefetch"
-$exe = "$dir\minefetch.exe"
+New-Item -Path $Install -ItemType Directory -Force | Out-Null
+Invoke-WebRequest -Uri $Url -OutFile $Exe
 
-if (-not (Test-Path -Path $dir)) {
-    New-Item -ItemType Directory -Path $dir | Out-Null
-}
-
-Invoke-WebRequest -Uri $url -OutFile $exe
-
-if (-not ($env:Path -split ';' -contains $dir)) {
-    [Environment]::SetEnvironmentVariable('Path', "$env:Path;$dir", [EnvironmentVariableTarget]::User)
-    $env:Path += ";$dir"
+if (-not ($env:Path -split ';' -contains $Install)) {
+    [Environment]::SetEnvironmentVariable('Path', "$env:Path;$Install", [EnvironmentVariableTarget]::User)
+    $env:Path += ";$Install"
 }
 
 Set-PSDebug -Trace 0
 
 if (Get-Command minefetch -ErrorAction SilentlyContinue) {
     Write-Host "Successfully installed Minefetch!" -ForegroundColor Green
-    Write-Host "You can run it by executing " -NoNewline
-    Write-Host "minefetch" -ForegroundColor Blue -NoNewline
+    Write-Host "You can run it using " -NoNewline
+    Write-Host " minefetch " -ForegroundColor Black -BackgroundColor White -NoNewline
     Write-Host " in your terminal."
 } else {
     Write-Host "Something went wrong." -ForegroundColor Red

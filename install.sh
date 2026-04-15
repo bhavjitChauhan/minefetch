@@ -1,52 +1,99 @@
-#!/usr/bin/env bash
-set -ex
+#!/bin/sh
+# Minefetch installation script for macOS and Linux.
+#
+# This script supports the fish, Zsh, and Bash shells. It detects the shell
+# using the SHELL environment variable, and only modifies the configuration file
+# for that shell. You can override the detected shell by setting the
+# MINEFETCH_SHELL environment variable to "fish", "zsh", or "bash".
+#
+# The default installation directory is ~/.local/bin. You can override this by
+# setting the MINEFETCH_INSTALL environment variable.
 
-version=$(
-  curl -s https://api.github.com/repos/bhavjitChauhan/minefetch/releases/latest |
-  grep '"tag_name":' |
-  head -n1 |
-  sed -E 's/.*"tag_name":[[:space:]]*"v?([^"]+)".*/\1/'
-)
-if [ -z "$version" ]; then
-    echo -e "\e[91mFailed to get latest version\e[0m"
-    exit 1
-fi
-os="$(uname | tr '[:upper:]' '[:lower:]')"
-arch="$(uname -m)"
+set -e
 
-case $arch in
-  amd64 | x86_64) arch="amd64" ;;
-  arm64 | aarch64) arch="arm64" ;;
-  *) echo -e "\e[91mUnsupported architecture: $arch\e[0m" >&2; exit 1 ;;
+success() {
+	printf '\n\033[1m\033[92m%s\033[0m\n' "$1"
+}
+
+error() {
+	printf '\n\033[91m%s\033[0m\n' "$1" >&2
+}
+
+highlight() {
+	printf '\033[7m %s \033[0m' "$1"
+}
+
+case "$(uname -ms)" in
+'Darwin arm64') port='darwin_arm64' ;;
+'Linux x86_64') port='linux_amd64' ;;
+'Linux aarch64') port='linux_arm64' ;;
+*)
+	error "Unsupported platform: $(uname -ms)"
+	echo 'This script only supports macOS on M-series chips and Linux on x64 or ARM.'
+	exit 1
+	;;
 esac
 
-url="https://github.com/bhavjitChauhan/minefetch/releases/download/v${version}/minefetch_${version}_${os}_${arch}"
-
-mkdir -p $HOME/.local/bin
-set +x
-if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
-    set -x
-    if [ -f $HOME/.bashrc ] && ! grep -q 'minefetch' $HOME/.bashrc; then
-        echo -e '\nexport PATH="$HOME/.local/bin:$PATH" # minefetch' >> $HOME/.bashrc
-    fi
-    if [ -f $HOME/.zshrc ] && ! grep -q 'minefetch' $HOME/.zshrc; then
-        echo -e '\nexport PATH="$HOME/.local/bin:$PATH" # minefetch' >> $HOME/.zshrc
-    fi
-    if [ -f $HOME/.config/fish/config.fish ] && ! grep -q 'minefetch' $HOME/.config/fish/config.fish; then
-        echo -e '\nset -Ua fish_user_paths ~/.local/bin # minefetch' >> $HOME/.config/fish/config.fish
-    fi
-    exec $SHELL
-fi
+url="https://github.com/bhavjitChauhan/minefetch/releases/latest/download/minefetch_${port}"
+install="${MINEFETCH_INSTALL:-$HOME/.local/bin}"
 
 set -x
-curl -LSfs "$url" -o $HOME/.local/bin/minefetch
-chmod +x $HOME/.local/bin/minefetch
 
-set +x
-if command -v minefetch >/dev/null 2>&1; then
-    echo -e "\n\e[92mSuccessfully installed Minefetch!\e[0m"
-    echo -e "You can run it by executing \e[94mminefetch\e[0m in your terminal."
-else
-    echo -e "\n\e[91mSomething went wrong.\e[0m" >&2
-    exit 1
+mkdir -p "$install"
+curl --fail --location --progress-bar --output "$install/minefetch" "$url"
+chmod +x "$install/minefetch"
+
+{ set +x; } 2>/dev/null
+
+if command -v minefetch >/dev/null; then
+	success 'Successfully installed Minefetch!'
+	printf 'You can run it using %s in your terminal.\n' "$(highlight 'minefetch')"
+	exit
 fi
+
+install_tilde=$(echo "$install" | sed "s|^$HOME|~|")
+install_home=$(echo "$install" | sed "s|^$HOME|\$HOME|")
+shell=${MINEFETCH_SHELL:-${SHELL##*/}}
+
+case $shell in
+fish)
+	config='.config/fish/conf.d/minefetch.fish'
+	command="fish_add_path $install_tilde"
+	if grep -Fqx "$command" "$HOME/$config" 2>/dev/null; then
+		error 'Installation already configured'
+		printf 'Restart your terminal or run %s to apply the changes, or specify your shell using MINEFETCH_SHELL.\n' "$(highlight "source ~/$config")"
+		exit
+	fi
+	set -x
+	mkdir -p "${HOME}/${config%/*}"
+	echo "$command" | tee "$HOME/$config" >/dev/null
+	;;
+zsh | bash)
+	case $shell in
+	zsh) config='.zshrc' ;;
+	bash) config='.bashrc' ;;
+	esac
+	command=$(printf 'export PATH="%s:$PATH"\n' "$install_home")
+	if grep -Fqx "$command" "$HOME/$config" 2>/dev/null; then
+		error 'Installation already configured'
+		printf 'Restart your terminal or run %s to apply the changes, or specify your shell using MINEFETCH_SHELL.\n' "$(highlight "source ~/$config")"
+		exit
+	fi
+	set -x
+	if [ ! -f "$HOME/$config" ]; then
+		echo "$command" | tee "$HOME/$config" >/dev/null
+	else
+		echo "\n$command" | tee -a "$HOME/$config" >/dev/null
+	fi
+	;;
+*)
+	error 'Unsupported shell'
+	echo "Add $(highlight "$install_tilde") to your PATH manually."
+	exit 1
+	;;
+esac
+
+{ set +x; } 2>/dev/null
+
+success 'Successfully installed Minefetch!'
+printf 'Restart your terminal or run %s to apply the changes.\n' "$(highlight "source ~/$config")"

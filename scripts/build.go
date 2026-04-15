@@ -1,3 +1,5 @@
+//go:build ignore
+
 package main
 
 import (
@@ -9,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 type port struct {
@@ -16,13 +19,14 @@ type port struct {
 }
 
 var ports = [...]port{
+	{"darwin", "arm64"},
 	{"linux", "amd64"},
 	{"linux", "arm64"},
-	{"darwin", "arm64"},
 	{"windows", "amd64"},
 }
 
 func main() {
+	start := time.Now()
 	cmd := exec.Command("git", "describe", "--tags", "--dirty", "--always")
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
@@ -38,27 +42,38 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = os.MkdirAll("bin", os.ModeDir)
+	err = os.Mkdir("bin", 0755)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	var wg sync.WaitGroup
+	ch := make(chan struct{}, len(ports))
+	wg.Add(len(ports))
 	for _, p := range ports {
 		go func(p port) {
-			file := filepath.Join("bin", fmt.Sprintf("minefetch_%s_%s_%s", version, p.os, p.arch))
+			start := time.Now()
+			name := fmt.Sprintf("minefetch_%s_%s", p.os, p.arch)
 			if p.os == "windows" {
-				file += ".exe"
+				name += ".exe"
 			}
-			log.Printf("Building %s...", file)
-			cmd := exec.Command("go", "build", "-o="+file, "-ldflags=-s -X 'main.version="+version+"'")
+			file := filepath.Join("bin", name)
+			log.Printf("%s/%s: building...", p.os, p.arch)
+			cmd := exec.Command("go", "build", "-o", file, "-ldflags", "-s -X main.version="+version)
 			cmd.Env = append(os.Environ(), "GOOS="+p.os, "GOARCH="+p.arch)
 			err := cmd.Run()
 			if err != nil {
-				log.Fatalln(err)
+				ch <- struct{}{}
+				log.Printf("%s/%s: %v", p.os, p.arch, err)
+			} else {
+				log.Printf("%s/%s: done (%v)", p.os, p.arch, time.Since(start).Round(time.Millisecond))
 			}
 			wg.Done()
 		}(p)
 	}
-	wg.Add(len(ports))
 	wg.Wait()
+	close(ch)
+	if len(ch) > 0 {
+		log.Fatalln("failed")
+	}
+	log.Printf("done (%v)", time.Since(start).Round(time.Millisecond))
 }
