@@ -2,7 +2,7 @@
 
 Minefetch is a neofetch-like tool for fetching Minecraft server information.
 
-![minefetch hypixel.net -i sixel](hypixel.png)
+![Output of `minefetch hypixel.net`](hypixel.png)
 
 ## Install
 
