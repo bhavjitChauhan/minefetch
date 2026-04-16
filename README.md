@@ -6,27 +6,35 @@ Minefetch is a neofetch-like tool for fetching Minecraft server information.
 
 ## Install
 
+Minefetch is a single binary with no third-party dependencies,
+so installation is as simple as downloading the binary for your platform
+and placing it in a convenient location.
+
+To update, simply repeat the installation process.
+
 ### Script
 
-#### Unix-like (Linux and macOS)
+For convenience, you can use the provided scripts to download and install the latest version.
+
+#### Unix-like (macOS and Linux)
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/install.sh | bash
+curl -fsSL bhv.sh/minefetch.sh | sh
 ```
 
 #### Windows
 
 ```ps1
-powershell -c "iwr https://raw.githubusercontent.com/bhavjitChauhan/minefetch/main/install.ps1 | iex"
+iwr bhv.sh/minefetch.ps1 | iex
 ```
 
-<!-- ### Go
+### Go
 
-If you have Go installed, you can use the `go install` command:
+If you have Go installed, you can use the `go install` command.
 
 ```sh
-go install github.com/bhavjitChauhan/minefetch@latest
-``` -->
+go install bhv.sh/minefetch@latest
+```
 
 ### Manual
 
@@ -68,32 +76,36 @@ minefetch --help
 - [x] Chat report prevention
 - [x] SRV lookup
 - [x] Raw output (`--output raw`)
+- [ ] MOTD sprites
+- [ ] Legacy status
+- [ ] Newer Forge servers
 
-## Internal packages
+Contributions are welcome.
 
-This project has no third-party dependencies, including Go's X-Repositories.
-This is not as impressive as it may sound, as Go's standard library is quite extensive.
-It does, however, mean that many wheels have been reinvented in the [internal](internal) directory.
-These include:
+## Structure
 
-- `mc`: Subset of the Java Edition protocol
-- `mcpe`: Subset of the Raknet protocol as used by Bedrock Edition
-- `term`: Terminal syscalls, and ANSI and xterm escape codes
-- `image/`
-    - `sixel`: Sixel encoding
-    - `scale`: Lanczos image scaling
-    - `quant`: Median-cut image quantization
-    - `pngconfig`: PNG header decoding
-    - `print`: Terminal image rendering via Unicode
-- `flag`: CLI flag parsing
-- `emoji`: Emoji detection and manipulation
+Minefetch has no third-party dependencies.
+All libraries are implemented in the (internal)[internal] directory.
 
-These packages should only be used for reference purposes.
-They are not intended for public use, and may break at any time.
+```
+.                      Main package
+└── internal
+    ├── mc             Subset of the Java Edition protocol
+    ├── mcpe           Subset of the Raknet protocol as used by Bedrock Edition
+    ├── term           Terminal syscalls and ANSI/xterm escape codes
+    ├── emoji          Emoji detection and manipulation
+    ├── flag           CLI flag parsing
+    └── image
+        ├── sixel      Sixel encoding
+        ├── scale      Lanczos image scaling
+        ├── quant      Median-cut image quantization
+        ├── pngconfig  PNG header decoding
+        └── print      Terminal image rendering via Unicode
+```
 
-## Inspiration
+These packages are not intended for external use, and may break at any time.
 
-This project was influenced by:
+## Related
 
 - [neofetch](https://github.com/dylanaraps/neofetch)
 - [mcstatus.io](https://mcstatus.io)
