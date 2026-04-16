@@ -98,7 +98,7 @@ func parseArgs() (err error) {
 	flag.Var(&cfg.output, "output", 'o', cfg.output, "Output format. (print, raw)")
 	flag.Var(&cfg.color, "color", 0, "auto", "Override terminal color support detection. (0, 16, 256, true)")
 	flag.Var(&cfg.icon.enabled, "no-icon", 'I', cfg.icon.enabled, "Don't print the server icon.")
-	flag.Var(&cfg.icon.format, "icon", 'i', "auto", "Icon print format. (sixel, half)")
+	flag.Var(&cfg.icon.format, "icon", 'i', "auto", "Icon print format. Sixel suport is experimental. (half, sixel)")
 	flag.Var(&cfg.icon.size, "icon-size", 's', cfg.icon.size, "Icon size in pixels.")
 	flag.Var(&cfg.maxList, "max-list", 'l', cfg.maxList, "Maximum number of lines in a list.")
 	flag.Var(&cfg.palette, "no-palette", 'P', cfg.palette, "Print Minecraft's formatting code colors.")
