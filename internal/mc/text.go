@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bhavjitChauhan/minefetch/internal/emoji"
-	"github.com/bhavjitChauhan/minefetch/internal/term"
+	"bhv.sh/minefetch/internal/emoji"
+	"bhv.sh/minefetch/internal/term"
 )
 
 // Text is a text component format object.

@@ -5,7 +5,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/bhavjitChauhan/minefetch/internal/set"
+	"bhv.sh/minefetch/internal/set"
 )
 
 // MedianCut is a color quantizer using the [median cut] algorithm.

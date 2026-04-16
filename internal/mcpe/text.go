@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bhavjitChauhan/minefetch/internal/term"
+	"bhv.sh/minefetch/internal/term"
 )
 
 // LegacyTextAnsi converts [Minecraft legacy formatting] to ANSI escape codes.

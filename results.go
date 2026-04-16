@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bhavjitChauhan/minefetch/internal/mc"
-	"github.com/bhavjitChauhan/minefetch/internal/mcpe"
+	"bhv.sh/minefetch/internal/mc"
+	"bhv.sh/minefetch/internal/mcpe"
 )
 
 type result[T any] struct {

@@ -26,7 +26,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/bhavjitChauhan/minefetch/internal/image/quant"
+	"bhv.sh/minefetch/internal/image/quant"
 )
 
 type Options struct {

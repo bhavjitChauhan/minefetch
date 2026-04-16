@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bhavjitChauhan/minefetch/internal/flag"
-	"github.com/bhavjitChauhan/minefetch/internal/mc"
-	"github.com/bhavjitChauhan/minefetch/internal/term"
+	"bhv.sh/minefetch/internal/flag"
+	"bhv.sh/minefetch/internal/mc"
+	"bhv.sh/minefetch/internal/term"
 )
 
 var cfg = struct {

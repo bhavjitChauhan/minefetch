@@ -9,10 +9,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/bhavjitChauhan/minefetch/internal/image/pngconfig"
-	"github.com/bhavjitChauhan/minefetch/internal/mc"
-	"github.com/bhavjitChauhan/minefetch/internal/mcpe"
-	"github.com/bhavjitChauhan/minefetch/internal/term"
+	"bhv.sh/minefetch/internal/image/pngconfig"
+	"bhv.sh/minefetch/internal/mc"
+	"bhv.sh/minefetch/internal/mcpe"
+	"bhv.sh/minefetch/internal/term"
 )
 
 const padding = 2

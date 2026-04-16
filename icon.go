@@ -9,10 +9,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/bhavjitChauhan/minefetch/internal/image/print"
-	"github.com/bhavjitChauhan/minefetch/internal/image/scale"
-	"github.com/bhavjitChauhan/minefetch/internal/image/sixel"
-	"github.com/bhavjitChauhan/minefetch/internal/term"
+	"bhv.sh/minefetch/internal/image/print"
+	"bhv.sh/minefetch/internal/image/scale"
+	"bhv.sh/minefetch/internal/image/sixel"
+	"bhv.sh/minefetch/internal/term"
 )
 
 const iconAspectRatio = 0.5
