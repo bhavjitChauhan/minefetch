@@ -83,7 +83,7 @@ zsh | bash)
 	if [ ! -f "$HOME/$config" ]; then
 		echo "$command" | tee "$HOME/$config" >/dev/null
 	else
-		echo "\n$command" | tee -a "$HOME/$config" >/dev/null
+		printf "\n%s" "$command" | tee -a "$HOME/$config" >/dev/null
 	fi
 	;;
 *)
