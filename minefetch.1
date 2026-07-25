@@ -1,0 +1,463 @@
+.Dd July 24, 2026
+.Dt MINEFETCH 1
+.Os
+.Sh NAME
+.Nm minefetch
+.Nd get Minecraft server information
+.Sh SYNOPSIS
+.Nm
+.\" .Op Ar options
+.Op Fl CIPSbchqrx
+.Op Fl -bedrock-port Ar port
+.Op Fl -color Ar color
+.Op Fl i Ar format
+.Op Fl l Ar lines
+.Op Fl o Ar output
+.Op Fl p Ar version
+.Op Fl -query-port Ar port
+.Op Fl -rcon-port Ar port
+.Op Fl s Ar size
+.Op Fl t Ar duration
+.Op Fl -version
+.\" .Op Ar address
+.Op Ar host Ns Op : Ns Ar port
+.Sh DESCRIPTION
+The
+.Nm
+utility is a
+.Xr neofetch 1 Ns
+-like tool for getting Minecraft server information.
+.Pp
+The
+.Ar host
+argument may be a domain name or IP address.
+If
+.Ar host
+is an IPv6 address, it must be wrapped in square brackets to also provide a
+.Ar port .
+If no
+.Ar host
+is provided,
+.Sy localhost
+is used.
+The default
+.Ar port
+is
+.Sy 25565
+for Java Edition and
+.Sy 19132
+for Bedrock.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl b , -bedrock
+Get Bedrock Edition server information.
+This flag will disable Java Edition status.
+.It Fl -bedrock-port Ar port
+The port to use for Bedrock Edition crossplay.
+This option is ignored with
+.Fl b
+as the positional
+.Ar port
+argument is used instead.
+.It Fl C , -no-crossplay
+Disable checking for a Bedrock Edition server running on the same host.
+.It Fl -color Ar color
+Override terminal color support detection.
+The supported
+.Ar color
+arguments are:
+.Bl -tag -width always -offset indent -compact
+.It Sy never
+No color.
+.It Sy always
+At least basic ANSI colors.
+.It Sy 16
+Basic ANSI colors.
+.It Sy 256
+Indexed colors.
+.It Sy true
+True 24-bit color.
+.El
+See
+.Sx ENVIRONMENT
+for information on color support detection.
+.It Fl c , -cracked
+Check if the Java Edition server is running in offline mode.
+An unauthenticated login request is sent,
+and the response is used to determine the mode.
+Whitelist detection is done by reading the disconnect message,
+although it is not accurate as servers can customize the message.
+.Pp
+Note that login attempts are logged in the server console
+and operators will see an unexpected disconnect message there.
+.It Fl h , -help
+Print usage information.
+.It Fl I , -no-icon
+Disable printing the server icon.
+.It Fl i , -icon Ar format
+Server icon print format.
+The supported
+.Ar format
+arguments are:
+.Bl -tag -width sixel -offset indent -compact
+.It Sy half
+Default.
+Uses terminal colors and Unicode characters.
+.It Sy sixel
+.Em Experimental .
+Uses the Sixel image format.
+.El
+.It Fl l , -max-list Ar lines
+Maximum number of lines to print for lists.
+The default value is
+.Sy 10 .
+.It Fl o , -output Ar output
+Output format.
+The supported
+.Ar output
+arguments are
+.Sy print No and Sy raw .
+The default value is
+.Sy print .
+See
+.Sx Print Output
+and
+.Sx Raw Output .
+.It Fl P , -no-palette
+Disable printing the Minecraft color palette.
+.It Fl p , -proto Ar version
+Protocol version to use for Java Edition status and
+.Fl -cracked .
+The
+.Ar version
+may be a Protocol Version Number or a version name.
+Version names are taken from the Minecraft Wiki
+with some modifications for brevity:
+.Bl -column -offset indent -compact "Release Candidate" "Suffix"
+.It Sy Original Ta Sy Suffix
+.It Release Candidate Ta rc
+.It Pre-Release Ta pre
+.It Snapshot Ta snap
+.El
+For example,
+.Dq 26.1.2 Release Candidate 1
+becomes
+.Sy 26.1.2-rc1 .
+Additionally,
+.Sy latest
+serves as an alias for the latest version known at build time
+.Pq see Sx BUGS .
+The default value is
+.Sy latest .
+.It Fl q , -query
+Get Java Edition server information using the Query protocol.
+Some of this information is already available via the status request
+and will not be displayed unless the
+.Fl S
+flag is passed to disable Java Edition status.
+Most servers do not have this protocol enabled.
+.It Fl -query-port Ar port
+The port to use for the Query protocol.
+Defaults to the
+.Ar port
+argument.
+.It Fl r , -rcon
+Check whether the RCON protocol is enabled.
+Most servers do not have this protocol enabled.
+.It Fl -rcon-port Ar port
+The port to use for the RCON protocol.
+The default is
+.Sy 25575 .
+.It Fl S , -no-status
+Disable Java Edition status.
+.It Fl s , -icon-size Ar size
+Server icon width as the number of terminal characters.
+The height will be half of this width.
+The default value is
+.Sy 32 .
+.It Fl t , -timeout Ar duration
+Maximum time to wait for a response before timing out.
+.\" Taken from https://pkg.go.dev/time#ParseDuration
+The
+.Ar duration
+is a sequence of decimal numbers,
+each with optional fraction and a unit suffix.
+Valid unit suffixes include
+.Sy ms , s ,
+and
+.Sy m .
+For example,
+.Sy 1.5s , 1500ms ,
+and
+.Sy 1s500ms
+are equivalent.
+The default value is
+.Sy 1s
+(one second).
+.It Fl -version
+Print
+.Nm
+version.
+.It Fl x , -blocked
+Check if the server is on Mojang\(cqs blocklist.
+.El
+.Ss Print Output
+This is the default mode.
+The server icon is printed if not disabled with
+.Fl I
+followed by information lines along its right edge.
+.Pp
+Java Edition lines:
+.Bl -tag -width Ds -offset indent
+.It Sy MOTD
+Message of the day.
+The text is trimmed and centered for visual parity,
+however, some messages may appear differently aligned in Minecraft.
+Some servers will fall back to legacy formatting for old protocol versions.
+.It Sy Ping
+Connection latency.
+Latencies less than 50 ms are colored green, between 50 and 100 yellow,
+and above 100 red.
+.It Sy Version
+Reported version.
+This is only visible in Minecraft
+when the server-reported version is incompatible.
+Some servers always report an incompatible version
+to display arbitrary information.
+.It Sy Players
+Online and maximum player counts along with a list of players, if given.
+The player list is visible in Minecraft when hovering over the player count.
+The online and maximum player counts may be arbitrarily set.
+Some servers use the player list to display arbitrary information.
+.It Sy Protocol
+The server version name and Protocol Version Number (PVN).
+If the PVN is not recognized, it will be printed alone.
+See
+.Sx BUGS .
+.It Sy Icon
+Server icon information.
+The icon is always a 64 \[tmu] 64 PNG image.
+What varies and is printed is whether it is interlaced, the bit depth,
+and color type.
+As per the PNG standard, the bit depth is a power of two from 1 to 16,
+and the color type is one of the following:
+.Bl -bullet -offset indent -compact
+.It
+grayscale
+.It
+grayscale + alpha
+.It
+indexed
+.It
+RGB
+.It
+RGBA
+.El
+.It Sy Secure chat
+Whether the server requires chat messages to be cryptographically signed.
+This serves as a measure to verify the sender and prevent tampering
+but also allows chat reporting.
+.It Sy Prevents chat reports
+Only printed if the server reports that it prevents Mojang\(cqs chat reporting.
+.It Sy Mods
+Forge mods.
+Only printed if the server is running Forge and reports one or more mods.
+.It Sy Query
+Whether the Query protocol is enabled on the server.
+Only printed if
+.Fl q
+is passed but the Query protocol is disabled or no additional information
+is returned.
+.It Sy Software
+Server software.
+Only printed if
+.Fl q
+is passed and the reported value is nonempty.
+.It Sy Plugins
+Server plugins.
+Only printed if
+.Fl q
+is passed and at least one plugin is reported.
+.It Sy Crossplay
+Whether a Bedrock Edition server is running on the same host.
+.It Sy Host
+User-provided domain name.
+Only printed if
+.Ar host
+is a domain name.
+.It Sy SRV
+Resolved SRV record host.
+Only printed if
+.Ar host
+is a domain name associated with a Minecraft SRV record.
+.It Sy IP
+User-provided or resolved IP address.
+.It Sy Port
+User-provided or resolved port.
+.It Sy Bedrock port
+The Bedrock Edition server port for crossplay.
+Only printed if crossplay is detected.
+.It Sy Blocked
+Whether the server is on Mojang\(cqs blocklist.
+Only printed if
+.Fl x
+is passed.
+.It Sy Cracked
+Whether the server is running in offline mode.
+Only printed if
+.Fl c
+is passed.
+.It Sy Whitelist
+Whether the server is whitelisted.
+Only printed if
+.Fl c
+is passed and the server is running in offline mode.
+.It Sy RCON
+Whether the RCON protocol is enabled on the server.
+Only printed if
+.Fl r
+is passed.
+.El
+.Pp
+Bedrock Edition lines:
+.Bl -tag -width Ds -offset indent
+.It Sy Java
+Only printed if
+.Fl b
+is not passed and no Java Edition is detected on the host.
+.It Sy Name
+Like the Java Edition\(cqs MOTD.
+.It Sy Level
+Not visible in Minecraft.
+May be empty.
+.It Sy Ping
+Same as for Java Edition.
+.It Sy Version
+Server version name and protocol number.
+.It Sy Players
+Online and maximum player counts.
+.It Sy Edition
+.Sy MCPE No (Minecraft: Pocket Edition) or Sy MCEE No (Minecraft: Education Edition) .
+.It Sy Game Mode
+Game mode name and ID.
+Not used by Minecraft.
+.It Sy Host
+User-provided domain name.
+.It Sy IP
+User-provided or resolved IP address.
+.It Sy Port
+User-provided or default port.
+.El
+.Pp
+A color palette is printed at the end of all information lines
+if not disabled with
+.Fl P .
+It consists of the 16 Minecraft legacy formatting colors.
+Bedrock Edition\(cqs additional 12 colors are printed when
+.Fl b
+is passed or the Java Edition server is offline.
+The colors may be approximations without true color support.
+.Ss Raw Output
+This mode prints the raw server response data.
+Data must be explicitly asked for to be printed.
+Only Java Edition status is printed by default.
+Only Bedrock Edition status is printed if
+.Fl b
+is passed.
+Query protocol status is printed only if
+.Fl q
+is passed.
+.Pp
+See
+.Lk https://minecraft.wiki
+for details on these formats.
+.Sh ENVIRONMENT
+Various environment variables such as
+.Ev TERM No and Ev COLORTERM
+are used to determine terminal color support.
+.Pp
+The following informal standards
+for overriding color detection are supported.
+In order of precedence:
+.Bl -tag -width FORCE_COLOR
+.It Ev FORCE_COLOR
+.Sy 0 No for disabling color support ,
+.Sy 1 No for 16 colors ,
+.Sy 2 No for 256 colors, and
+.Sy 3 No for true color support .
+See
+.Lk https://force-color.org .
+.It Ev NO_COLOR
+If set to a nonempty value, color support is disabled.
+See
+.Lk https://no-color.org .
+.\" .It Ev CLICOLOR_FORCE , CLICOLOR
+.\" .Sy 0
+.\" for disabling color support and nonempty for 16 colors.
+.\" See
+.\" .Lk https://bixense.com/clicolors .
+.El
+.Pp
+The
+.Fl -color
+flag will override any environment configuration.
+.Sh EXAMPLES
+Local server status:
+.Pp
+.Dl $ minefetch
+.Pp
+Remote server:
+.Pp
+.Dl $ minefetch hypixel.net
+.Pp
+Explicit port:
+.Pp
+.Dl $ minefetch hypixel.net:25565
+.Pp
+IPv4 address:
+.Pp
+.Dl $ minefetch 127.0.0.1
+.Pp
+IPv6 address:
+.Pp
+.Dl $ minefetch ::1
+.Pp
+IPv6 address and port:
+.Pp
+.Dl $ minefetch [::1]:25565
+.Pp
+Using the 1.8.9 protocol.
+.Pp
+.Dl $ minefetch -p 1.8.9 hypixel.net
+.Pp
+Bedrock Edition:
+.Pp
+.Dl $ minefetch -b play.lbsg.net
+.Sh SEE ALSO
+.Xr neofetch 1
+.Sh AUTHORS
+.An Bhavjit Chauhan Aq Mt minefetch@bhavjit.com .
+.Sh CAVEATS
+As a measure against server scanners,
+some servers only respond to a second status request.
+Servers can also disable status reporting altogether,
+so not receiving a response does not necessarily mean the server is offline.
+.Pp
+Only the
+.Sy MOTD
+text accepts the modern text component format which supports true color.
+Other formatted text uses legacy formatting codes
+which only support 16 colors in Java Edition and 28 in Bedrock Edition.
+.Pp
+Bedrock Edition servers do not have an associated icon.
+The default image is printed for all Bedrock Edition servers.
+.Sh BUGS
+Legacy servers (pre-1.7) are not supported.
+.Pp
+Version names are generated at build time,
+so newer servers may have their
+.Sy Protocol
+reported as the raw Protocol Version Number (PVN) only
+and newer versions need to passed using their PVN for
+.Fl p .
