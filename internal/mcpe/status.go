@@ -91,7 +91,7 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	}
 
 	b := make([]byte, n)
-	_, err = br.Read(b)
+	_, err = io.ReadFull(br, b)
 	if err != nil {
 		return
 	}
@@ -102,6 +102,10 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	}
 
 	ss := strings.Split(string(b), ";")
+	if len(ss) < 6 {
+		err = errors.New("invalid response: insufficient fields")
+		return
+	}
 	status.Edition = ss[0]
 	status.Name = ss[1]
 	status.Version.Protocol, err = strconv.Atoi(ss[2])
@@ -117,29 +121,37 @@ func readUnconnectedPong(r io.Reader) (status StatusResponse, err error) {
 	if err != nil {
 		return
 	}
-	status.ID = ss[6]
-	status.Level = ss[7]
-	status.GameMode.Name = ss[8]
-	if len(ss) == 9 {
-		return
+	if len(ss) > 6 {
+		status.ID = ss[6]
 	}
-	status.GameMode.ID, err = strconv.Atoi(ss[9])
-	if err != nil {
-		return
+	if len(ss) > 7 {
+		status.Level = ss[7]
 	}
-	if len(ss) == 10 {
-		return
+	if len(ss) > 8 {
+		status.GameMode.Name = ss[8]
 	}
-	ipv4Port, err := strconv.Atoi(ss[10])
-	if err != nil {
-		return
+	if len(ss) > 9 {
+		status.GameMode.ID, err = strconv.Atoi(ss[9])
+		if err != nil {
+			return
+		}
 	}
-	status.Port.IPv4 = uint16(ipv4Port)
-	ipv6Port, err := strconv.Atoi(ss[11])
-	if err != nil {
-		return
+	if len(ss) > 10 {
+		var ipv4Port int
+		ipv4Port, err = strconv.Atoi(ss[10])
+		if err != nil {
+			return
+		}
+		status.Port.IPv4 = uint16(ipv4Port)
 	}
-	status.Port.IPv6 = uint16(ipv6Port)
+	if len(ss) > 11 {
+		var ipv6Port int
+		ipv6Port, err = strconv.Atoi(ss[11])
+		if err != nil {
+			return
+		}
+		status.Port.IPv6 = uint16(ipv6Port)
+	}
 
 	return
 }

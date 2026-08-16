@@ -178,7 +178,7 @@ func parseArgs() (err error) {
 	case 1:
 		cfg.host, port, err = mc.SplitHostPort(args[0])
 		if err != nil {
-			if strings.ContainsRune(args[0], ':') {
+			if net.ParseIP(args[0]) == nil && strings.ContainsRune(args[0], ':') {
 				return
 			}
 			err = nil

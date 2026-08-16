@@ -138,7 +138,7 @@ func writeData(b *bytes.Buffer, m *image.Paletted, thresh uint) error {
 				if _, ok := colors[index]; !ok {
 					colors[index] = make([]byte, bounds.Dx())
 				}
-				colors[index][x] |= 1 << dy
+				colors[index][x-bounds.Min.X] |= 1 << dy
 			}
 		}
 		i := 0

@@ -20,6 +20,7 @@ func IsBlocked(host string) (selector string, err error) {
 	}
 	if resp.StatusCode != 200 {
 		err = errors.New("status not ok: " + resp.Status)
+		return
 	}
 	defer resp.Body.Close()
 

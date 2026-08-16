@@ -97,33 +97,14 @@ func bg16(c color.Color) string {
 	return "\033[" + strconv.Itoa(int(code)) + "m"
 }
 
-func code256(c color.Color) uint8 {
-	c = color256.Convert(c)
-	n := color.NRGBAModel.Convert(c).(color.NRGBA)
-	var r, g, b = n.R, n.G, n.B
-	if r == g && g == b && r != 0 && r != 255 {
-		return (r-8)/10 + 232
-	}
-	if r != 0 {
-		r = (r - 55) / 40
-	}
-	if g != 0 {
-		g = (g - 55) / 40
-	}
-	if b != 0 {
-		b = (b - 55) / 40
-	}
-	return 16 + (r * 36) + (g * 6) + b
-}
-
 func fg256(c color.Color) string {
-	code := code256(c)
-	return "\033[38;5;" + strconv.Itoa(int(code)) + "m"
+	code := color256.Index(c)
+	return "\033[38;5;" + strconv.Itoa(code) + "m"
 }
 
 func bg256(c color.Color) string {
-	code := code256(c)
-	return "\033[48;5;" + strconv.Itoa(int(code)) + "m"
+	code := color256.Index(c)
+	return "\033[48;5;" + strconv.Itoa(code) + "m"
 }
 
 func fg(c color.Color) string {
