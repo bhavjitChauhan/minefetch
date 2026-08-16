@@ -148,11 +148,14 @@ func (icon *Icon) UnmarshalText(text []byte) error {
 	if len(text) == 0 {
 		return nil
 	}
-	// len("data:image/png;base64,") = 22
-	text = text[22:]
-	*icon = make([]byte, len(text))
-	_, err := base64.StdEncoding.Decode(*icon, text)
-	return err
+	text = bytes.TrimPrefix(text, []byte("data:image/png;base64,"))
+	buf := make([]byte, base64.StdEncoding.DecodedLen(len(text)))
+	n, err := base64.StdEncoding.Decode(buf, text)
+	if err != nil {
+		return err
+	}
+	*icon = buf[:n]
+	return nil
 }
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Status_Request
