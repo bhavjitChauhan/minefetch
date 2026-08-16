@@ -85,6 +85,9 @@ func normText(v any, parent Text) Text {
 		t.Extra = []Text{}
 		return t
 	case []any:
+		if len(v) == 0 {
+			return parent
+		}
 		t := normText(v[0], parent)
 		for _, e := range v[1:] {
 			t.Extra = append(t.Extra, normText(e, t))
