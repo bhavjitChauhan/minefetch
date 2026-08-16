@@ -7,12 +7,13 @@ import (
 	"unicode/utf8"
 )
 
+var csiRegexp = regexp.MustCompile(`\033\[[0-9;]*[a-zA-Z]`)
+
 // RemoveCsi returns s without [Control Sequence Introducer commands].
 //
 // [Control Sequence Introducer commands]: https://en.wikipedia.org/wiki/ANSI_escape_code#CSIsection
 func RemoveCsi(s string) string {
-	re := regexp.MustCompile(`\033\[\d+(?:;\d+)*[a-zA-Z]`)
-	return re.ReplaceAllString(s, "")
+	return csiRegexp.ReplaceAllString(s, "")
 }
 
 // TrimSpace is like strings.TrimSpace, but ignores [Control Sequence Introducer commands].
@@ -41,7 +42,7 @@ func TrimSpace(s string) string {
 			continue
 		}
 		if esc || csi {
-			csi = csi && !((r > 'A' && r < 'Z') || (r > 'a' && r < 'z'))
+			csi = csi && !((r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z'))
 			if start == -1 {
 				b.WriteRune(r)
 			}
